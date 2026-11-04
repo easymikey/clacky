@@ -70,7 +70,7 @@ The same, with a No that ends the form: `ui.ask(confirm("Create it?").or_cancel(
 
 ## Examples
 
-Run one with `cargo run --example <name>` (`derive` needs `--features derive`): `create_app`, `select`, `search`, `files_and_dates`, `numbers`, `live`, `abort`, `defaults`, `i18n`, `accessible`, `derive`, `login` and `size`.
+Run one with `cargo run --example <name>` (`derive` needs `--features derive`): [`create_app`](examples/create_app.rs), [`select`](examples/select.rs), [`search`](examples/search.rs), [`files_and_dates`](examples/files_and_dates.rs), [`numbers`](examples/numbers.rs), [`live`](examples/live.rs), [`abort`](examples/abort.rs), [`defaults`](examples/defaults.rs), [`i18n`](examples/i18n.rs), [`accessible`](examples/accessible.rs), [`derive`](examples/derive.rs), [`login`](examples/login.rs) and [`size`](examples/size.rs).
 
 ## Contributing
 
