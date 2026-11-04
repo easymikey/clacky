@@ -82,8 +82,7 @@ assert_eq!(
 # }
 ```
 
-A struct of unsupported field types, a tuple struct, a non-unit variant
-and options in the wrong place fail to compile:
+A struct of unsupported field types, a tuple struct, a non-unit variant and options in the wrong place fail to compile:
 
 ```compile_fail
 #[derive(clacky::Choices)]

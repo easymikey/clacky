@@ -1,8 +1,6 @@
 # Testing a form
 
-With the `fake` feature, [`fake::Script`](crate::fake::Script) is a scripted
-terminal: it hands out the keys you give it and records what was written.
-Write the form as a function over the session, and run it on a script.
+With the `fake` feature, [`fake::Script`](crate::fake::Script) is a scripted terminal: it hands out the keys you give it and records what was written. Write the form as a function over the session, and run it on a script.
 
 ```
 use clacky::{
@@ -30,8 +28,4 @@ fn main() -> Result<()> {
 }
 ```
 
-`written()`, `frames()` and [`fake::screen`](crate::fake::screen) give back what
-a person would have seen. `TerminalKind::Dumb` and `Redirected` scripts test the
-line paths, reading the lines of the third argument, and
-`Script::stopped_at_key(n)` stops a question at the nth read to test
-`Error::Aborted`.
+`written()`, `frames()` and [`fake::screen`](crate::fake::screen) give back what a person would have seen. `TerminalKind::Dumb` and `Redirected` scripts test the line paths, reading the lines of the third argument, and `Script::stopped_at_key(n)` stops a question at the nth read to test `Error::Aborted`.

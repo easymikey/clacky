@@ -1,7 +1,6 @@
 # Look and terminals
 
-Theme, symbols, messages and key map are values on the session, so two
-sessions never share them.
+Theme, symbols, messages and key map are values on the session, so two sessions never share them.
 
 ```
 use clacky::prelude::*;
@@ -21,9 +20,4 @@ let session = Session::detect().map(|ui| {
 # drop(session);
 ```
 
-`OutputMode::Accessible` prints changed rows as new lines instead of
-redrawing, and `Session::detect` picks it for `TERM=dumb`. There choices are a
-numbered list. With piped stdin, `text`, `password`, `date` and `path` read the
-next line and the other prompts are `Error::NoInput`, as is a stdin that ends,
-never the default. The cursor and terminal settings are restored on every
-exit.
+`OutputMode::Accessible` prints changed rows as new lines instead of redrawing, and `Session::detect` picks it for `TERM=dumb`. There choices are a numbered list. With piped stdin, `text`, `password`, `date` and `path` read the next line and the other prompts are `Error::NoInput`, as is a stdin that ends, never the default. The cursor and terminal settings are restored on every exit.

@@ -1,7 +1,6 @@
 # Prompts
 
-Every prompt is a free function that returns a builder; `ui.ask(prompt)` runs
-it and gives back a typed answer.
+Every prompt is a free function that returns a builder; `ui.ask(prompt)` runs it and gives back a typed answer.
 
 ```no_run
 use clacky::prelude::*;
@@ -22,10 +21,7 @@ let port = ui.ask(
 
 ## Checking answers
 
-`.validate(check)` returns `Ok(())` or `Err(message)`, and a refused answer
-keeps the question open under the message. `.parse::<T>()` and `.map(f)` change
-the answer, and a tuple of prompts is asked in order. `simulate` runs a prompt
-on a list of keys without a terminal, so it also serves as a quick try:
+`.validate(check)` returns `Ok(())` or `Err(message)`, and a refused answer keeps the question open under the message. `.parse::<T>()` and `.map(f)` change the answer, and a tuple of prompts is asked in order. `simulate` runs a prompt on a list of keys without a terminal, so it also serves as a quick try:
 
 ```
 use clacky::prelude::*;
@@ -46,11 +42,7 @@ assert_eq!(email.simulate(keys)?, "a@b");
 
 ## Prefill and `--yes`
 
-`.given(Option<T>)` skips a question whose answer came from the command line,
-and `.given_line(Option<&str>)` reads text from the environment as a typed
-line. `Defaults::Take` answers the rest with their defaults, and a question
-without one is `Error::NoDefault`. A `confirm` has one built in, Yes, so
-`--yes` answers Yes unless `.default(Reply::No)` says otherwise.
+`.given(Option<T>)` skips a question whose answer came from the command line, and `.given_line(Option<&str>)` reads text from the environment as a typed line. `Defaults::Take` answers the rest with their defaults, and a question without one is `Error::NoDefault`. A `confirm` has one built in, Yes, so `--yes` answers Yes unless `.default(Reply::No)` says otherwise.
 
 ```no_run
 use clacky::prelude::*;

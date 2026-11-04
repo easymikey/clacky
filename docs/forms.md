@@ -1,7 +1,6 @@
 # Forms with derive
 
-With the `derive` feature an enum becomes a `select` and a struct becomes a
-form asked field by field. The dependency must be named `clacky`:
+With the `derive` feature an enum becomes a `select` and a struct becomes a form asked field by field. The dependency must be named `clacky`:
 
 ```toml
 clacky = { version = "0.1", features = ["derive"] }
@@ -34,6 +33,4 @@ fn main() -> Result<()> {
 }
 ```
 
-`Setup::form()` has a setter per field taking an `Option`, and only the fields
-left `None` are asked. The [`core::askable`](crate::core::askable) page lists
-the field types and options.
+`Setup::form()` has a setter per field taking an `Option`, and only the fields left `None` are asked. The [`core::askable`](crate::core::askable) page lists the field types and options.
