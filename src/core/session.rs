@@ -1548,7 +1548,7 @@ mod tests {
             Painter::new(Skin::new(ColorChoice::Plain), OutputMode::Animated);
         painted(&mut painter, Some(80), &["a", "b"]);
         assert_eq!(painter.leave(Some(80), "done\n"), "\r\x1b[2A\x1b[Jdone\n");
-        assert!(painter.shown.is_empty());
+        assert_eq!(painter.shown, Vec::<String>::new());
     }
 
     #[test]

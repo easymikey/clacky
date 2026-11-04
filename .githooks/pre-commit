@@ -1,0 +1,3 @@
+#!/bin/sh
+# Format and lint before every commit. Enable once with `just hooks`.
+exec cargo bin just fmt-check clippy

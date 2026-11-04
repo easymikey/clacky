@@ -751,7 +751,7 @@ mod tests {
                 .group("Web", [(1, "One")])
                 .optional(),
         )?;
-        assert!(values.is_empty());
+        assert_eq!(values, []);
         assert!(ui.terminal().written().contains("◇  Which?\n│  none\n│\n"));
         Ok(())
     }

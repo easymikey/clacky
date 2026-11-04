@@ -625,7 +625,7 @@ mod tests {
     fn optional_answers_nothing_and_shows_none() -> Result<()> {
         let ui = bare(Script::new(TerminalKind::Live, [Key::Enter], []));
         let values = ui.ask(multiselect("Which?").item(1, "A").optional())?;
-        assert!(values.is_empty());
+        assert_eq!(values, []);
         assert!(ui.terminal().written().contains("◇  Which?\n│  none\n│\n"));
         Ok(())
     }

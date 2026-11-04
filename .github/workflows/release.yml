@@ -1,0 +1,71 @@
+name: release
+# Two ways in, one result: `release-plz release` publishes the crate versions
+# that crates.io does not have yet, tags them and creates the GitHub releases.
+#  - Run the workflow by hand: it first runs `release-plz update` and commits
+#    `chore: release` to main.
+#  - Push a `chore: release` made by `just release`: once ci passes on main,
+#    this workflow publishes. With every version already on crates.io it does nothing.
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+# Never two publishes at once; a waiting run is replaced by a newer one.
+concurrency:
+  group: release
+  cancel-in-progress: false
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  release:
+    if: >-
+      github.repository_owner == 'easymikey' && (
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - run: rustup toolchain install
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/cargo-bin*
+            .bin
+          key: ${{ runner.os }}-release-${{ hashFiles('Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-release-
+      - name: cargo-run-bin
+        run: command -v cargo-bin || cargo install cargo-run-bin --locked
+      - name: update versions and changelogs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cargo bin release-plz update
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "nothing to release"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "chore: release"
+          git push origin HEAD:main
+      - name: publish, tag and create GitHub releases
+        run: |
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "::error::CARGO_REGISTRY_TOKEN is not set"
+            exit 1
+          fi
+          cargo bin release-plz release --git-token "$GITHUB_TOKEN"

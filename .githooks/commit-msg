@@ -1,0 +1,12 @@
+#!/bin/sh
+# Refuse a commit subject that is not a Conventional Commit.
+subject=$(head -n 1 "$1")
+case "$subject" in
+    "Merge "* | 'Revert "'*) exit 0 ;;
+esac
+if printf '%s\n' "$subject" | grep -Eq '^(feat|fix|refactor|perf|docs|test|build|ci|chore|style|revert)(\([a-z0-9-]+\))?!?: .+'; then
+    exit 0
+fi
+echo "commit-msg: subject must be a Conventional Commit, e.g. 'fix(derive): reject empty enums'." >&2
+echo "types: feat fix refactor perf docs test build ci chore style revert" >&2
+exit 1

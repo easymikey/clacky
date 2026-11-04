@@ -353,7 +353,7 @@ mod tests {
         if cfg!(windows) {
             assert_eq!(sug("src/M", PathKind::Any), vec!["main.rs".to_owned()]);
         } else {
-            assert!(sug("src/M", PathKind::Any).is_empty());
+            assert_eq!(sug("src/M", PathKind::Any), Vec::<String>::new());
         }
     }
 
@@ -377,8 +377,8 @@ mod tests {
 
     #[test]
     fn missing_dir_is_empty() {
-        assert!(sug("nope/", PathKind::Any).is_empty());
-        assert!(sug("src/main.rs/", PathKind::Any).is_empty());
+        assert_eq!(sug("nope/", PathKind::Any), Vec::<String>::new());
+        assert_eq!(sug("src/main.rs/", PathKind::Any), Vec::<String>::new());
     }
 
     #[test]
