@@ -289,11 +289,20 @@ impl<T: Terminal> Session<T> {
     }
 
     pub(crate) fn spinner_ended(&self) {
-        self.spinners
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |count| {
-                count.checked_sub(1)
-            })
-            .unwrap_or_default();
+        // `fetch_update` is deprecated on newer Rust and `try_update` is past
+        // the MSRV.
+        let mut count = self.spinners.load(Ordering::Relaxed);
+        while let Some(less) = count.checked_sub(1) {
+            match self.spinners.compare_exchange_weak(
+                count,
+                less,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => break,
+                Err(now) => count = now,
+            }
+        }
     }
 
     fn not_aborted(&self) -> Result<()> {
