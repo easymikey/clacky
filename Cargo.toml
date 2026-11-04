@@ -10,7 +10,7 @@ description = "Clack-style terminal prompts: one question at a time on a rail, t
 readme = "README.md"
 authors = ["Mikhail Avdeev"]
 repository = "https://github.com/easymikey/clacky"
-exclude = [".unlazy/", ".github/", ".githooks/", ".config/", "justfile", "rustfmt.toml", "release-plz.toml", "rust-toolchain.toml", "spellcheck.dic", "CONTRIBUTING.md"]
+exclude = [".unlazy/", "assets/", ".github/", ".githooks/", ".config/", "justfile", "rustfmt.toml", "release-plz.toml", "rust-toolchain.toml", "spellcheck.dic", "CONTRIBUTING.md"]
 
 [workspace]
 members = ["clacky-derive"]

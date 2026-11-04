@@ -1,14 +1,16 @@
-# clacky
+<h1 align="center"><img src="assets/logo.svg" alt="clacky" width="640"></h1>
 
-```text
- ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
- ⠀⠀⠀⠀⣀⣀⡀⠀⠀⠀⣿⡇⠀⠀⠀⣀⣀⣀⡀⠀⠀⠀⠀⢀⣀⣀⠀⠀⠀⢸⣿⡇⠀⠀⣀⠀⢀⣀⠀⠀⠀⢀⡀
- ⠀⠀⣴⣿⠛⠛⢿⣷⠀⠀⣿⡇⠀⢰⡿⠟⠛⠻⣿⡆⠀⢠⣾⡟⠛⠻⣿⡆⠀⢸⣿⣇⣴⣿⠟⠀⠸⣿⡆⠀⢀⣾⡟    Clack-style terminal prompts for Rust.
- ⠀⢸⣿⡇⠀⠀⠀⣀⠀⠀⣿⡇⠀⣠⣴⠶⠖⠛⣿⡇⠀⣿⣿⠀⠀⠀⢀⡀⠀⢸⣿⡿⠻⣷⡄⠀⠀⢹⣿⡀⣼⡿⠀
- ⠀⠀⢻⣷⣦⣤⣾⡿⠃⠀⣿⡇⠀⢿⣿⣤⣤⡾⢿⣧⠀⠘⣿⣶⣤⣴⣿⠟⠀⢸⣿⡇⠀⠹⣿⡆⠀⠀⢻⣿⣿⠁⠀    cargo add clacky
- ⠀⠀⠀⠈⠉⠉⠁⠀⠀⠀⠉⠁⠀⠀⠉⠉⠁⠀⠈⠁⠀⠀⠀⠉⠉⠉⠀⠀⠀⠀⠉⠀⠀⠀⠈⠁⢀⣀⣼⣿⠃⠀⠀    cargo add clacky --features derive
- ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠛⠁⠀⠀⠀
-```
+<p align="center"><a href="#install">Install</a> · <a href="https://docs.rs/clacky">Docs</a> · <a href="examples">Examples</a></p>
+
+<div align="center">
+
+[![version](https://img.shields.io/crates/v/clacky.svg)](https://crates.io/crates/clacky)
+[![docs](https://img.shields.io/docsrs/clacky)](https://docs.rs/clacky)
+[![build](https://github.com/easymikey/clacky/actions/workflows/ci.yml/badge.svg)](https://github.com/easymikey/clacky/actions/workflows/ci.yml)
+[![minimum Rust](https://img.shields.io/crates/msrv/clacky)](Cargo.toml)
+[![license](https://img.shields.io/crates/l/clacky)](#license)
+
+</div>
 
 Clack-style prompts for Rust: one question at a time on a rail, answers as typed values, and a form you can test without a terminal. It is a port of [@clack/prompts](https://github.com/bombshell-dev/clack) with its look and keys.
 
