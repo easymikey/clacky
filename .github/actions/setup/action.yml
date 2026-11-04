@@ -26,17 +26,4 @@ runs:
         command -v cargo-bin || cargo install cargo-run-bin --locked
     - if: inputs.full == 'true'
       shell: bash
-      run: |
-        value() { sed -n "s/^$1 := \"\(.*\)\"/\1/p" justfile; }
-        nightly=$(value nightly) msrv=$(value msrv) zig=$(value zig)
-        [ -z "$nightly" ] || rustup toolchain install "$nightly" --profile minimal --component rustfmt
-        [ -z "$msrv" ] || rustup toolchain install "$msrv" --profile minimal
-        if [ "$RUNNER_OS" = Linux ]; then
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libclang-dev
-          if [ -n "$zig" ]; then
-            name=zig-$(uname -m)-linux-$zig
-            curl -fsSL "https://ziglang.org/download/$zig/$name.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
-            echo "$RUNNER_TEMP/$name" >> "$GITHUB_PATH"
-          fi
-        fi
+      run: cargo bin just ci-setup

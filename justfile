@@ -46,6 +46,12 @@ commits range="origin/main..HEAD":
         exit "$status"
     }
 
+ci-setup:
+    rustup toolchain install {{ nightly }} --profile minimal --component rustfmt
+    rustup toolchain install {{ msrv }} --profile minimal
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends libclang-dev
+
 hooks:
     git config core.hooksPath .githooks
 
