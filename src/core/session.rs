@@ -208,6 +208,8 @@ pub struct Session<T: Terminal> {
     spinners: AtomicUsize,
     abort: Abort,
     scope: Mutex<Abort>,
+    /// The warning the next question opens under; set by `ask_until` only.
+    warning: Mutex<Option<String>>,
 }
 
 impl Session<Console> {
@@ -240,6 +242,7 @@ impl<T: Terminal> Session<T> {
             spinners: AtomicUsize::new(0),
             abort: Abort::default(),
             scope: Mutex::new(Abort::default()),
+            warning: Mutex::new(None),
             terminal: term,
         }
     }
@@ -379,19 +382,20 @@ impl<T: Terminal> Session<T> {
         &self.terminal
     }
 
-    /// Asks the prompt `make` builds and runs `attempt` on the answer while
+    /// Asks the question `make` builds and runs `attempt` on the answer while
     /// `label` shows a spinner; a failed attempt is retried up to `tries` times
-    /// when `retry` gives a warning, and a redirected input is asked once.
+    /// when `retry` gives a warning, and a redirected input is asked once. The
+    /// question may end in [`Ask::map`], so `attempt` gets the mapped answer.
     ///
     /// # Errors
     /// The terminal failed, or the person stopped the question. When the tries
     /// run out, the last attempt error is in the inner `Result`.
     #[cfg(feature = "tokio")]
-    pub async fn ask_until<P: ask::Prompt, A, F>(
+    pub async fn ask_until<Q: Ask, A, F>(
         &self,
-        make: impl Fn() -> P,
+        make: impl Fn() -> Q,
         label: &str,
-        attempt: impl AsyncFn(&P::Output) -> std::result::Result<A, F>,
+        attempt: impl AsyncFn(&Q::Output) -> std::result::Result<A, F>,
         retry: impl Fn(&F) -> Option<String>,
         tries: NonZeroU8,
     ) -> Result<std::result::Result<A, F>> {
@@ -400,15 +404,23 @@ impl<T: Terminal> Session<T> {
     }
 
     #[cfg(feature = "tokio")]
-    async fn try_until<P: ask::Prompt, A, F>(
+    async fn try_until<Q: Ask, A, F>(
         &self,
-        make: &impl Fn() -> P,
+        make: &impl Fn() -> Q,
         label: &str,
-        attempt: &impl AsyncFn(&P::Output) -> std::result::Result<A, F>,
+        attempt: &impl AsyncFn(&Q::Output) -> std::result::Result<A, F>,
         retry: &impl Fn(&F) -> Option<String>,
         (tries, warning): (u8, Option<&str>),
     ) -> Result<std::result::Result<A, F>> {
-        let answer = self.drive_warned(make(), warning)?;
+        *self.warning.lock().unwrap_or_else(PoisonError::into_inner) =
+            warning.map(str::to_owned);
+        let asked = make().run(self);
+        // A question that never reached a prompt leaves its warning behind.
+        self.warning
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take();
+        let answer = asked?;
         let outcome = self.wait(label, attempt(&answer)).await?;
         let again =
             outcome.as_ref().err().and_then(retry).filter(|_| {
@@ -439,10 +451,15 @@ impl<T: Terminal> Session<T> {
     }
 
     pub(crate) fn drive<P: ask::Prompt>(&self, prompt: P) -> Result<P::Output> {
-        self.drive_warned(prompt, None)
+        let warning = self
+            .warning
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take();
+        self.drive_warned(prompt, warning.as_deref())
     }
 
-    pub(crate) fn drive_warned<P: ask::Prompt>(
+    fn drive_warned<P: ask::Prompt>(
         &self,
         prompt: P,
         warning: Option<&str>,

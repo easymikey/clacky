@@ -56,7 +56,7 @@ pub fn clear_line() -> String {
 #[must_use]
 pub fn intro(skin: &Skin, title: &str) -> String {
     let (theme, symbols) = (skin.theme(), skin.symbols());
-    let title = skin.paint(theme.title, &format!(" {title} "));
+    let title = skin.paint(theme.title, &format!(" {} ", title.trim()));
     match skin.guide() {
         Guide::Drawn => format!(
             "{}  {title}\n{}\n",

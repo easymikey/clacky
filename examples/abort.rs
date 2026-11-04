@@ -6,7 +6,7 @@ use clacky::prelude::*;
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" abort ")?;
+    ui.intro("abort")?;
 
     match ui.ask(text("Name").timeout(Duration::from_secs(10))) {
         Err(Error::Aborted) => return ui.cancel("Too slow"),

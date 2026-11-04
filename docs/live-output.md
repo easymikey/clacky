@@ -1,6 +1,6 @@
 # Live output
 
-Output that is not a question hangs off the session too: `log`, `note` and `boxed` print once, and `spinner`, `progress`, `tasks`, `stream` and `task_log` stay open while work runs. Asking while a spinner runs is `Error::Busy`.
+Output that is not a question hangs off the session too: `log`, `note` and `boxed` print once, and `spinner`, `progress`, `tasks`, `stream` and `task_log` stay open while work runs. Asking while a spinner runs is `Error::Busy`. A `log` message with `\n` keeps its first line by the symbol and puts the rest on the rail; `print` writes text as is, without the rail, for snippets to copy.
 
 ```no_run
 use clacky::{Tone, prelude::*};

@@ -5,7 +5,7 @@ use clacky::{Choice, prelude::*};
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" search ")?;
+    ui.intro("search")?;
 
     let one = ui.ask(
         autocomplete("Crate")

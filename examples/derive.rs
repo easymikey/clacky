@@ -51,7 +51,7 @@ fn main() -> Result<()> {
     };
     let ui = Session::detect()?.defaults(defaults);
 
-    ui.intro(" derive ")?;
+    ui.intro("derive")?;
     let setup = ui.ask(Setup::form().name(args.name).kind(args.kind))?;
     ui.outro(format_args!(
         "{} on port {}, {:?}",

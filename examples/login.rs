@@ -15,7 +15,7 @@ fn sign_in(user: &str, secret: &str) -> std::result::Result<(), String> {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" login ")?;
+    ui.intro("login")?;
 
     let user = ui.ask(text("User name").default("ada"))?;
 

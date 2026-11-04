@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     let ui = Session::detect()?
         .output(OutputMode::Accessible)
         .without_rail();
-    ui.intro(" accessible ")?;
+    ui.intro("accessible")?;
 
     let kind = ui.ask(select("Kind").item("lib", "Library").item("bin", "Binary"))?;
     let ok = ui.ask(confirm("Create it?"))?;

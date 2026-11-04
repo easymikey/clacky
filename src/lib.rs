@@ -8,7 +8,7 @@
 //!
 //! fn main() -> Result<()> {
 //!     let ui = Session::detect()?;
-//!     ui.intro(" my-app ")?;
+//!     ui.intro("my-app")?;
 //!     let name = ui.ask(text("Project name").default("my-app"))?;
 //!     let port: u16 = ui.ask(number("Port").min(1).max(65535).default(8080))?;
 //!     ui.outro(format!("{name} on {port}"))
@@ -30,6 +30,7 @@
 //! | `tokio` | yes | `Session::ask_until`, `wait`, `AsyncTasks`, `Spinner::during` |
 //! | `derive` | no | `#[derive(Choices)]`, `#[derive(Form)]` |
 //! | `fake` | no | `clacky::fake`, the scripted terminal and screen emulator |
+//! | `secrecy` | no | `password(..).secret()`, a `secrecy::SecretString` answer |
 #![deny(missing_docs)]
 
 /// The README, compiled: every code block in it is a doc test.

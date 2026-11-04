@@ -8,7 +8,8 @@ use crate::{
 };
 
 impl<T: Terminal> Session<T> {
-    /// Opens the rail with a title line.
+    /// Opens the rail with a title line; pass the bare title, it is padded and
+    /// shown reversed as clack does.
     /// # Errors
     /// The terminal failed.
     pub fn intro(&self, title: impl Display) -> Result<()> {
@@ -19,11 +20,23 @@ impl<T: Terminal> Session<T> {
         self.write(&draw::intro(self.skin(), &title.to_string()))
     }
 
-    /// One log entry: a symbol for the tone, then the message on the rail.
+    /// One log entry: a symbol for the tone, then the message on the rail. A
+    /// message of several lines keeps its first line beside the symbol and puts
+    /// the rest under it on the rail, as clack does.
     /// # Errors
     /// The terminal failed.
     pub fn log(&self, tone: Tone, message: impl Display) -> Result<()> {
         self.write(&draw::log(self.skin(), tone, &message.to_string()))
+    }
+
+    /// Prints `text` as is, with no rail and no style, and ends its last line
+    /// so the next prompt or log entry starts clean.
+    /// # Errors
+    /// The terminal failed.
+    pub fn print(&self, text: impl Display) -> Result<()> {
+        let text = text.to_string();
+        let end = if text.ends_with('\n') { "" } else { "\n" };
+        self.write(&format!("{text}{end}"))
     }
 
     /// A box with a title and the lines inside.
@@ -46,7 +59,7 @@ impl<T: Terminal> Session<T> {
     /// # fn main() -> clacky::core::error::Result<()> {
     /// let ui = Session::detect()?;
     /// let (name, port) = ("my-app", 8080);
-    /// ui.intro(format_args!(" {name} "))?;
+    /// ui.intro(name)?;
     /// ui.outro(format_args!("{name} on {port}"))
     /// # }
     /// ```
@@ -115,6 +128,41 @@ mod tests {
             "{shown}"
         );
         assert!(shown.ends_with("└  done on 8080"), "{shown}");
+    }
+
+    #[test]
+    fn intro_pads_a_bare_title_and_does_not_pad_twice() {
+        let shown = |title: &str| {
+            let session = session();
+            assert!(session.intro(title).is_ok());
+            screen(&session.terminal().written())
+        };
+        assert_eq!(shown("setup"), "┌   setup\n│");
+        assert_eq!(shown(" setup "), shown("setup"));
+    }
+
+    #[test]
+    fn print_writes_text_as_is_and_the_next_entry_starts_clean() {
+        let session = session();
+        let done = session
+            .print("one\n  two")
+            .and_then(|()| session.print("three\n"))
+            .and_then(|()| session.log(Tone::Info, "after"));
+        assert!(done.is_ok());
+        assert_eq!(
+            screen(&session.terminal().written()),
+            "one\n  two\nthree\n●  after\n│"
+        );
+    }
+
+    #[test]
+    fn log_keeps_the_first_line_by_the_symbol_and_the_rest_on_the_rail() {
+        let session = session();
+        assert!(session.log(Tone::Success, "Saved\n~/a\n\nend").is_ok());
+        assert_eq!(
+            screen(&session.terminal().written()),
+            "◆  Saved\n│  ~/a\n│\n│  end\n│"
+        );
     }
 
     #[test]

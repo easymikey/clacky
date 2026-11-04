@@ -14,7 +14,7 @@ fn pause(ticks: u32, mut tick: impl FnMut() -> Result<()>) -> Result<()> {
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" live ")?;
+    ui.intro("live")?;
 
     let mut spinner = ui.spinner();
     spinner.start("Resolving")?;

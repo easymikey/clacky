@@ -6,7 +6,7 @@ use clacky::{NoteLine, NoteTone, output::spinner::DELAY, prelude::*};
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" create-app ")?;
+    ui.intro("create-app")?;
 
     let asked = ui
         .ask((

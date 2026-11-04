@@ -59,7 +59,7 @@ use clacky::prelude::*;
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" my-app ")?;
+    ui.intro("my-app")?;
 
     let name = ui.ask(text("Project name").placeholder("my-app").default("my-app"))?;
     let kind = ui.ask(select("Kind").item("lib", "Library").item("bin", "Binary"))?;

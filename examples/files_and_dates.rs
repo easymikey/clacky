@@ -4,7 +4,7 @@ use clacky::{Date, DateOrder, prelude::*};
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" files and dates ")?;
+    ui.intro("files and dates")?;
 
     let Some(earliest) = Date::new(2026, 1, 1) else {
         return ui.cancel("No such date");

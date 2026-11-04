@@ -3,6 +3,7 @@
 use unicode_segmentation::UnicodeSegmentation as _;
 use zeroize::Zeroizing;
 
+#[cfg(feature = "secrecy")] use crate::core::ask::Ask;
 use crate::{
     core::{
         ask::{Frame, Key, Next, Peek, Phase, Prefill, Prompt, Redirected},
@@ -93,6 +94,13 @@ impl Password {
                 ..self.field
             },
         }
+    }
+
+    /// Answers a [`secrecy::SecretString`] instead of a `Zeroizing<String>`.
+    #[cfg(feature = "secrecy")]
+    #[must_use]
+    pub fn secret(self) -> impl Ask<Output = secrecy::SecretString> {
+        self.map(|mut text| secrecy::SecretString::from(std::mem::take(&mut *text)))
     }
 }
 
@@ -435,6 +443,79 @@ mod tests {
         let raw = ui.terminal().written();
         assert!(raw.contains(&format!("└  {WRONG}")), "{raw:?}");
         assert!(!raw.contains("good"), "{raw:?}");
+        Ok(())
+    }
+
+    #[cfg(feature = "tokio")]
+    #[tokio::test]
+    async fn until_hands_the_attempt_the_mapped_answer() -> Result<()> {
+        use crate::core::ask::Ask as _;
+
+        struct Secret(String);
+
+        let keys = chars("bad")
+            .chain([Key::Enter])
+            .chain(chars("good"))
+            .chain([Key::Enter]);
+        let ui = live(keys);
+        let done = ui
+            .ask_until(
+                || {
+                    password("Pass").map(|typed: Zeroizing<String>| {
+                        Secret(typed.as_str().to_uppercase())
+                    })
+                },
+                "Signing in",
+                async |secret: &Secret| {
+                    if secret.0 == "GOOD" {
+                        Ok(())
+                    } else {
+                        Err(WRONG)
+                    }
+                },
+                |_| Some(WRONG.to_owned()),
+                NonZeroU8::MIN.saturating_add(1),
+            )
+            .await?;
+        assert_eq!(done, Ok(()));
+        let raw = ui.terminal().written();
+        assert!(raw.contains(&format!("└  {WRONG}")), "{raw:?}");
+        Ok(())
+    }
+
+    #[cfg(feature = "secrecy")]
+    #[test]
+    fn secret_answers_a_secret_string_with_the_typed_text() -> Result<()> {
+        use secrecy::ExposeSecret as _;
+
+        let ui = live(chars("hunter2").chain([Key::Enter]));
+        let secret = ui.ask(password("Pass").secret())?;
+        assert_eq!(secret.expose_secret(), "hunter2");
+        Ok(())
+    }
+
+    #[cfg(all(feature = "secrecy", feature = "tokio"))]
+    #[tokio::test]
+    async fn secret_works_with_ask_until() -> Result<()> {
+        use secrecy::ExposeSecret as _;
+
+        let ui = live(chars("good").chain([Key::Enter]));
+        let done = ui
+            .ask_until(
+                || password("Pass").secret(),
+                "Signing in",
+                async |secret: &secrecy::SecretString| {
+                    if secret.expose_secret() == "good" {
+                        Ok(())
+                    } else {
+                        Err(WRONG)
+                    }
+                },
+                |_| Some(WRONG.to_owned()),
+                NonZeroU8::MIN,
+            )
+            .await?;
+        assert_eq!(done, Ok(()));
         Ok(())
     }
 }

@@ -59,3 +59,5 @@ let token = ui.ask(
 ui.outro(format_args!("port {port}, {} bytes of token", token.len()))
 # }
 ```
+
+With the `secrecy` feature, `password("Token").secret()` answers a `secrecy::SecretString` instead of a `Zeroizing<String>`.

@@ -16,7 +16,7 @@ fn main() -> Result<()> {
         .symbols(Symbols::ascii())
         .messages(messages);
 
-    ui.intro(" i18n ")?;
+    ui.intro("i18n")?;
     let flavor = ui.ask(
         select("Sorte")
             .item("vanilla", "Vanille")

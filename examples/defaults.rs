@@ -17,7 +17,7 @@ fn main() -> Result<()> {
 
     let defaults = if yes { Defaults::Take } else { Defaults::Ask };
     let ui = Session::detect()?.defaults(defaults);
-    ui.intro(" defaults ")?;
+    ui.intro("defaults")?;
 
     // `Some` prints the answered line and asks nothing; `None` asks, or takes
     // the default under --yes.

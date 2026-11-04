@@ -5,7 +5,7 @@ use clacky::prelude::*;
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" select ")?;
+    ui.intro("select")?;
 
     let region = ui.ask(
         select("Region")

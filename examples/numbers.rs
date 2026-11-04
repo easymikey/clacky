@@ -6,7 +6,7 @@ use clacky::prelude::*;
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    ui.intro(" numbers ")?;
+    ui.intro("numbers")?;
 
     let port: u16 = ui.ask(number("Port").min(1024).max(65535).default(8080))?;
     let ratio = ui.ask(
