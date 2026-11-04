@@ -1,10 +1,17 @@
 name: ci
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 env:
   CARGO_TERM_COLOR: always
+  NEXTEST_PROFILE: ci
 jobs:
   ci:
     name: ci (${{ matrix.os }})
@@ -13,54 +20,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Linux runs every check; the other systems only what is OS-dependent.
           - os: ubuntu-latest
-            recipes: ""
+            recipes: default
           - os: macos-latest
-            recipes: clippy clippy-no-default check
+            recipes: clippy clippy-no-default check examples
           - os: windows-latest
-            recipes: clippy clippy-no-default check
+            recipes: clippy clippy-no-default check examples
     defaults:
       run:
-        # `just` recipes use `sh`, and one pipes through `grep`: Git bash
-        # gives the Windows runner both.
         shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # The pinned toolchain of rust-toolchain.toml, then what the justfile
-      # names: nightly for fmt, the MSRV for `msrv`.
-      - name: Toolchains
-        run: |
-          rustup toolchain install
-          if [ "$RUNNER_OS" = Linux ]; then
-            rustup toolchain install nightly-2026-10-30 --profile minimal --component rustfmt
-            rustup toolchain install 1.85 --profile minimal
-          fi
-      # `cargo spellcheck` links libclang.
-      - name: libclang
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libclang-dev
-      - uses: actions/cache@v4
+      - uses: ./.github/actions/setup
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin/cargo-bin*
-            .bin
-            target
-          key: ${{ runner.os }}-ci-${{ hashFiles('Cargo.lock', 'Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-ci-
-      - name: cargo-run-bin
-        run: command -v cargo-bin || cargo install cargo-run-bin --locked
+          full: ${{ runner.os == 'Linux' }}
       - run: cargo bin just ${{ matrix.recipes }}
-      # Commit subjects: the pull request range, or the pushed range.
-      - name: commit subjects (pull request)
-        if: runner.os == 'Linux' && github.event_name == 'pull_request'
-        run: cargo bin just commits ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
-      - name: commit subjects (push)
-        if: runner.os == 'Linux' && github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
-        run: cargo bin just commits ${{ github.event.before }}..${{ github.sha }}
+      - if: runner.os == 'Linux' && github.event_name != 'workflow_dispatch'
+        run: cargo bin just commits ${{ github.event.pull_request.base.sha || github.event.before }}..${{ github.event.pull_request.head.sha || github.sha }}

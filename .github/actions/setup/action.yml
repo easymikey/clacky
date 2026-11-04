@@ -1,0 +1,31 @@
+name: setup
+inputs:
+  full:
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: rustup toolchain install
+    - if: inputs.full == 'true'
+      shell: bash
+      run: |
+        rustup toolchain install "$(sed -n 's/^nightly := "\(.*\)"/\1/p' justfile)" --profile minimal --component rustfmt
+        rustup toolchain install "$(sed -n 's/^msrv := "\(.*\)"/\1/p' justfile)" --profile minimal
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends libclang-dev
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin/cargo-bin*
+          ~/.cargo/bin/cargo-binstall*
+          .bin
+          target
+        key: ${{ runner.os }}-${{ github.workflow }}-${{ hashFiles('Cargo.lock', 'Cargo.toml') }}
+        restore-keys: ${{ runner.os }}-${{ github.workflow }}-
+    - shell: bash
+      run: |
+        command -v cargo-binstall || curl -fsSL https://raw.githubusercontent.com/cargo-bins/cargo-binstall/v1.26.2/install-from-binstall-release.sh | BINSTALL_VERSION=1.26.2 bash
+        command -v cargo-bin || cargo install cargo-run-bin --locked
