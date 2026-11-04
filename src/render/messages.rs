@@ -129,8 +129,9 @@ settings! {
         error_cancelled: Cow<'static, str> => Cow<'static, str>,
         /// The error of a question ended from outside (a stop or a timeout).
         error_aborted: Cow<'static, str> => Cow<'static, str>,
-        /// The error of input that ended before an answer.
-        error_no_input: Cow<'static, str> => Cow<'static, str>,
+        /// The error of input that ended before an answer; given the question's
+        /// label.
+        error_no_input: fn(&str) -> String,
         /// The error of a choice prompt without options.
         error_no_choices: Cow<'static, str> => Cow<'static, str>,
         /// The error of a question without a default that must answer by
@@ -182,6 +183,10 @@ fn number_at_least(min: &str) -> String {
 
 fn number_at_most(max: &str) -> String {
     format!("Enter a number of at most {max}")
+}
+
+fn error_no_input(question: &str) -> String {
+    format!("no input: stdin ended before {question} was given")
 }
 
 fn error_no_default(question: &str) -> String {
@@ -259,9 +264,7 @@ impl Messages {
             error_interrupted: Cow::Borrowed("interrupted"),
             error_cancelled: Cow::Borrowed("cancelled"),
             error_aborted: Cow::Borrowed("aborted"),
-            error_no_input: Cow::Borrowed(
-                "no input: stdin ended before an answer was given",
-            ),
+            error_no_input,
             error_no_choices: Cow::Borrowed("nothing to choose from"),
             error_no_default,
             error_busy: Cow::Borrowed("a spinner is running, stop it before asking"),
@@ -281,7 +284,7 @@ impl Messages {
             Error::Interrupted => self.error_interrupted.to_string(),
             Error::Cancelled => self.error_cancelled.to_string(),
             Error::Aborted => self.error_aborted.to_string(),
-            Error::NoInput => self.error_no_input.to_string(),
+            Error::NoInput { question } => (self.error_no_input)(question),
             Error::NoChoices => self.error_no_choices.to_string(),
             Error::NoDefault { question } => (self.error_no_default)(question),
             Error::Busy => self.error_busy.to_string(),
@@ -338,14 +341,19 @@ mod tests {
         let german = Messages::english()
             .error_cancelled("abgebrochen")
             .error_aborted("beendet")
-            .error_no_input("keine Eingabe")
+            .error_no_input(|question| format!("{question}: keine Eingabe"))
             .error_no_default(|question| format!("{question}: keine Vorgabe"));
         let cancelled = Error::Cancelled;
         let no_default = Error::NoDefault {
             question: "Name".to_owned(),
         };
         assert_eq!(german.error(&cancelled), "abgebrochen");
-        assert_eq!(german.error(&Error::NoInput), "keine Eingabe");
+        assert_eq!(
+            german.error(&Error::NoInput {
+                question: "Name".to_owned()
+            }),
+            "Name: keine Eingabe"
+        );
         assert_eq!(german.error(&Error::Aborted), "beendet");
         assert_eq!(german.error(&no_default), "Name: keine Vorgabe");
         assert_eq!(Messages::english().error(&cancelled), cancelled.to_string());

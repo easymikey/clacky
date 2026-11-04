@@ -551,7 +551,7 @@ pub(crate) mod testing {
             Ok(value) => show(value),
             Err(Error::Interrupted) => "interrupted".to_owned(),
             Err(Error::Cancelled) => "cancelled".to_owned(),
-            Err(Error::NoInput) => "no input".to_owned(),
+            Err(Error::NoInput { .. }) => "no input".to_owned(),
             Err(other) => format!("other: {other}"),
         }
     }

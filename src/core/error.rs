@@ -16,8 +16,11 @@ pub enum Error {
     /// leaves it an error: a [`Stop`](crate::terminal::abort::Stop) was called
     /// or a timeout ran out.
     Aborted,
-    /// The input ended before the answer.
-    NoInput,
+    /// The input ended before `question` was answered.
+    NoInput {
+        /// The label of the question.
+        question: String,
+    },
     /// Reading from or writing to the terminal failed.
     Terminal(io::Error),
     /// The terminal could not hide what is typed, so a secret would show.
@@ -52,7 +55,7 @@ impl Error {
         match self {
             Self::Interrupted | Self::Cancelled => true,
             Self::Aborted
-            | Self::NoInput
+            | Self::NoInput { .. }
             | Self::NoChoices
             | Self::NoDefault { .. }
             | Self::Busy
@@ -77,7 +80,7 @@ impl error::Error for Error {
             Self::Interrupted
             | Self::Cancelled
             | Self::Aborted
-            | Self::NoInput
+            | Self::NoInput { .. }
             | Self::DuplicateKey(_)
             | Self::NoChoices
             | Self::NoDefault { .. }
@@ -107,8 +110,8 @@ mod tests {
     #[case::cancelled(Error::Cancelled, "cancelled")]
     #[case::aborted(Error::Aborted, "aborted")]
     #[case::no_input(
-        Error::NoInput,
-        "no input: stdin ended before an answer was given"
+        Error::NoInput { question: "Email".to_owned() },
+        "no input: stdin ended before Email was given"
     )]
     #[case::no_choices(Error::NoChoices, "nothing to choose from")]
     #[case::no_default(
@@ -135,7 +138,7 @@ mod tests {
     #[case::echo(Error::EchoNotHidden(broken()), Some("pipe closed"))]
     #[case::cancelled(Error::Cancelled, None)]
     #[case::aborted(Error::Aborted, None)]
-    #[case::no_input(Error::NoInput, None)]
+    #[case::no_input(Error::NoInput { question: String::new() }, None)]
     fn only_io_errors_have_a_source(#[case] error: Error, #[case] cause: Option<&str>) {
         assert_eq!(error.source().map(ToString::to_string).as_deref(), cause);
     }
@@ -144,7 +147,7 @@ mod tests {
     #[case::interrupted(Error::Interrupted, true)]
     #[case::cancelled(Error::Cancelled, true)]
     #[case::aborted(Error::Aborted, false)]
-    #[case::no_input(Error::NoInput, false)]
+    #[case::no_input(Error::NoInput { question: String::new() }, false)]
     #[case::no_choices(Error::NoChoices, false)]
     #[case::no_default(Error::NoDefault { question: String::new() }, false)]
     #[case::busy(Error::Busy, false)]

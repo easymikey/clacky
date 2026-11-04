@@ -3,7 +3,7 @@
 use crate::{
     core::{
         ask::{Frame, Key, Next, Peek, Phase, Prefill, Prompt, Redirected},
-        error::{Error, Result},
+        error::Result,
     },
     prompts::caret,
     render::{
@@ -418,7 +418,9 @@ impl<T: Numeric> Prompt for Number<T> {
     }
 
     fn finish(self, state: NumberState<T>) -> Result<T> {
-        state.value.ok_or(Error::NoInput)
+        state
+            .value
+            .ok_or_else(|| crate::core::session::no_input(&self))
     }
 
     /// A line that is no number is refused whole, not typed key by key.

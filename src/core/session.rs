@@ -483,7 +483,7 @@ impl<T: Terminal> Session<T> {
             TerminalKind::Dumb => self.drive_lines(&prompt, state, warning, &abort),
             TerminalKind::Redirected => match prompt.redirected() {
                 Redirected::Line => self.drive_piped(&prompt, state, &abort),
-                Redirected::NoInput => Err(Error::NoInput),
+                Redirected::NoInput => Err(no_input(&prompt)),
             },
         }
         .and_then(|state| prompt.finish(state))
@@ -516,7 +516,7 @@ impl<T: Terminal> Session<T> {
                 reason: reason.text(self.skin().messages()),
             }),
             Next::Quit(_, quit) => Err(stopped_by(quit)),
-            Next::Editing(_) => Err(Error::NoInput),
+            Next::Editing(_) => Err(no_input(prompt)),
         }
     }
 
@@ -789,7 +789,7 @@ impl<T: Terminal> Session<T> {
     ) -> Result<P::State> {
         let line = match self.terminal.line(abort).map_err(Error::Terminal)? {
             LineRead::Line(line) => Zeroizing::new(line),
-            LineRead::End => return Err(Error::NoInput),
+            LineRead::End => return Err(no_input(prompt)),
             LineRead::Aborted => return Err(Error::Aborted),
         };
         match self.typed_line(prompt, state, &line)? {
@@ -921,6 +921,12 @@ impl<T: Terminal> Session<T> {
 enum Typed<S> {
     Done(S),
     Refused(String),
+}
+
+pub(crate) fn no_input(prompt: &impl ask::Prompt) -> Error {
+    Error::NoInput {
+        question: prompt.message().to_owned(),
+    }
 }
 
 pub(crate) fn stopped_by(quit: Cancellation) -> Error {
@@ -1763,7 +1769,16 @@ mod tests {
     fn a_piped_stdin_never_waits_for_keys() {
         let ui = bare(Script::new(TerminalKind::Redirected, [Key::Enter], []));
         let asked = ui.ask(select("Kind").item(1, "A").item(2, "B"));
-        assert!(matches!(asked, Err(Error::NoInput)), "{asked:?}");
+        assert!(
+            matches!(asked, Err(Error::NoInput { ref question }) if question == "Kind"),
+            "{asked:?}"
+        );
+        let ended = bare(Script::new(TerminalKind::Redirected, [], []));
+        let asked = ended.ask(ask_text("Name"));
+        assert!(
+            matches!(asked, Err(Error::NoInput { ref question }) if question == "Name"),
+            "{asked:?}"
+        );
         let piped = bare(Script::new(TerminalKind::Redirected, [], ["Ada"]));
         assert_eq!(piped.ask(ask_text("Name")).ok().as_deref(), Some("Ada"));
         assert!(!piped.terminal().written().contains(HIDE_CURSOR));

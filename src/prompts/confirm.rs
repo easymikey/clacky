@@ -437,7 +437,7 @@ mod tests {
         let result = confirm("Go?").default(default).simulate(keys);
         match expected {
             Some(yes) => assert_eq!(result.ok(), Some(yes)),
-            None => assert!(matches!(result, Err(Error::NoInput))),
+            None => assert!(matches!(result, Err(Error::NoInput { .. }))),
         }
     }
 
@@ -665,7 +665,7 @@ mod tests {
     #[test]
     fn piped_input_is_no_input() {
         let ui = bare(Script::new(TerminalKind::Redirected, [], ["y"]));
-        assert!(matches!(ui.ask(confirm("Go?")), Err(Error::NoInput)));
+        assert!(matches!(ui.ask(confirm("Go?")), Err(Error::NoInput { .. })));
     }
 
     #[rstest]

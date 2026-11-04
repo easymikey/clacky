@@ -177,7 +177,9 @@ impl Prompt for DatePrompt {
     }
 
     fn finish(self, state: DateState) -> Result<Date> {
-        state.done.ok_or(crate::core::error::Error::NoInput)
+        state
+            .done
+            .ok_or_else(|| crate::core::session::no_input(&self))
     }
 
     /// An ISO line `YYYY-MM-DD` typed in this order; an empty line is Enter.

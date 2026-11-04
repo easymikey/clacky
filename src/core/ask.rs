@@ -16,7 +16,7 @@ use crate::{
     core::{
         error::{Error, Result},
         keys::{KeyMap, Printable},
-        session::{Session, stopped_by},
+        session::{Session, no_input, stopped_by},
     },
     render::{
         color::ColorChoice,
@@ -318,7 +318,7 @@ pub trait Prompt: Sized {
                 question: self.message().to_owned(),
                 reason: reason.text(&Messages::english()),
             }),
-            ControlFlow::Continue((_, None)) => Err(Error::NoInput),
+            ControlFlow::Continue((_, None)) => Err(no_input(&self)),
         }
     }
 }
@@ -543,7 +543,7 @@ where
     }
 
     fn finish(self, (_, value): Self::State) -> Result<T> {
-        value.ok_or(Error::NoInput)
+        value.ok_or_else(|| no_input(&self.inner))
     }
 
     fn listing(&self, messages: &Messages) -> Vec<String> {
@@ -933,7 +933,10 @@ mod tests {
         let ctrl_c = kinds().simulate([Key::Interrupt]);
         assert!(matches!(ctrl_c, Err(Error::Interrupted)), "{ctrl_c:?}");
         let short = kinds().simulate([Key::Down]);
-        assert!(matches!(short, Err(Error::NoInput)), "{short:?}");
+        assert!(
+            matches!(short, Err(Error::NoInput { ref question }) if question == "Kind"),
+            "{short:?}"
+        );
     }
 
     #[test]

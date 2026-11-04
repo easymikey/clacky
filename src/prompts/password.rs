@@ -387,7 +387,7 @@ mod tests {
         assert_eq!(ui.terminal().discards(), 0);
         let none = bare(Script::new(TerminalKind::Redirected, [], []));
         let asked = none.ask(password("Pass"));
-        assert!(matches!(asked, Err(Error::NoInput)), "{asked:?}");
+        assert!(matches!(asked, Err(Error::NoInput { .. })), "{asked:?}");
         Ok(())
     }
 
