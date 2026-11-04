@@ -23,14 +23,14 @@ It pulls in 4 crates where cliclack pulls in 41.
 
 ## Features
 
-- **Prompts**: `text`, `password`, `multiline`, `confirm`, `number`, `date`, `path`, `select`, `select_key`, `multiselect`, `group_multiselect` and `autocomplete`, each with a builder.
-- **Derive forms**: `#[derive(Choices)]` makes an enum a `select`, and `#[derive(Form)]` makes a struct a form asked field by field.
-- **Live output**: spinner, progress bar, tasks, task log, text streams, notes and boxes, and futures under a spinner with `tokio`.
-- **Theming by value**: theme, symbols, messages and key map are values on the session, so other languages and ASCII terminals need no global switch.
-- **Prefill and `--yes`**: `.given(arg)` skips a question that was answered on the command line, and `Defaults::Take` answers the rest with their defaults.
-- **Line terminals and accessible mode**: `TERM=dumb`, piped input and screen-reader output each have their own path, and a question nobody can answer is an error, not a hang.
-- **Abort and timeout**: `.timeout(duration)` and `Abort` end a question from a deadline or another thread, and the terminal is put back.
-- **Scripted tests**: `Prompt::simulate` runs a prompt on a list of keys, and `fake::Script` is a scripted terminal for a whole form.
+- **Prompts**: `text`, `password`, `confirm`, `number`, `date`, `path`, `select`, `multiselect`, `autocomplete` and more, each a builder.
+- **Derive forms**: `#[derive(Choices, Form)]` makes an enum a `select` and a struct a form.
+- **Live output**: spinner, progress bar, tasks, notes and boxes.
+- **Theming by value**: theme, symbols, messages and keys belong to the session, not a global.
+- **Prefill and `--yes`**: `.given(arg)` skips an answered question, `Defaults::Take` takes the defaults.
+- **Terminals without a keyboard**: `TERM=dumb` and piped input have their own path.
+- **Abort and timeout**: `.timeout(duration)` and `Abort` end a question and restore the terminal.
+- **Scripted tests**: `Prompt::simulate` and `fake::Script` run a form without a terminal.
 - **Small**: 4 dependencies without `tokio`, about 410 KiB for a three question form.
 
 ## Install
@@ -64,27 +64,11 @@ fn main() -> Result<()> {
 }
 ```
 
-`Session::detect` reads the environment once. Esc and Ctrl-C come back as errors. The [guide](https://docs.rs/clacky/latest/clacky/guide/index.html) has a page per topic: prompts, forms, prefill, live output, theming, line terminals, abort, testing, and a size comparison with other libraries.
+`Session::detect` reads the environment once. Esc and Ctrl-C come back as errors. The [guide](https://docs.rs/clacky/latest/clacky/guide/index.html) has a page per topic.
 
 ## Examples
 
-Run one with `cargo run --example <name>`; `derive` needs `--features derive`.
-
-| Example | Shows |
-|---|---|
-| `create_app` | the clack demo flow: a form, a spinner, a note |
-| `select` | select, multiselect, groups, key shortcuts, a disabled option |
-| `search` | autocomplete, its multiple form and a custom match rule |
-| `files_and_dates` | `path` and `date` |
-| `numbers` | `number` ranges and steps, `validate`, `parse` |
-| `live` | spinner, progress, tasks, task log and a text stream |
-| `abort` | a timeout and an `Abort` stopped from a thread |
-| `defaults` | `.given`, `.given_line` and `--yes` with `Defaults::Take` |
-| `i18n` | a theme, ASCII symbols and German messages |
-| `accessible` | `OutputMode::Accessible` |
-| `derive` | `Choices` and `Form` with answers from the command line |
-| `login` | a password asked again while a server refuses it |
-| `size` | the three question form that `just size` measures |
+Run one with `cargo run --example <name>` (`derive` needs `--features derive`): `create_app`, `select`, `search`, `files_and_dates`, `numbers`, `live`, `abort`, `defaults`, `i18n`, `accessible`, `derive`, `login` and `size`.
 
 ## Contributing
 

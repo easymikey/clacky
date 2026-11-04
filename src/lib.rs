@@ -20,11 +20,10 @@
 //! only some programs name, such as `Tone` or `DateOrder`, sit at the root.
 //!
 //! The [`guide`] has a page per topic: [prompts](guide::prompts),
-//! [forms with derive](guide::forms), [prefill and defaults](guide::defaults),
-//! [live output](guide::live_output), [theming](guide::theming),
-//! [terminals without a keyboard](guide::line_terminals),
-//! [abort and timeout](guide::abort), [testing](guide::testing) and
-//! [size and comparison](guide::size). `examples/` has a program per topic.
+//! [forms with derive](guide::forms), [live output](guide::live_output),
+//! [look and terminals](guide::theming), [abort and timeout](guide::abort),
+//! [testing](guide::testing) and [size and comparison](guide::size).
+//! `examples/` has a program per topic.
 //!
 //! | Feature | Default | What it adds |
 //! |---|---|---|
@@ -48,17 +47,11 @@ pub mod guide {
     #[doc = include_str!("../docs/forms.md")]
     pub mod forms {}
 
-    #[doc = include_str!("../docs/defaults.md")]
-    pub mod defaults {}
-
     #[doc = include_str!("../docs/live-output.md")]
     pub mod live_output {}
 
     #[doc = include_str!("../docs/theming.md")]
     pub mod theming {}
-
-    #[doc = include_str!("../docs/line-terminals.md")]
-    pub mod line_terminals {}
 
     #[doc = include_str!("../docs/abort.md")]
     pub mod abort {}

@@ -1,9 +1,7 @@
-
 # Forms with derive
 
-With the `derive` feature an enum becomes a `select` over its variants and a
-struct becomes a form asked field by field. Neither needs `PartialEq`. The
-dependency must be named `clacky`, with the feature on:
+With the `derive` feature an enum becomes a `select` and a struct becomes a
+form asked field by field. The dependency must be named `clacky`:
 
 ```toml
 clacky = { version = "0.1", features = ["derive"] }
@@ -20,12 +18,6 @@ enum Kind {
     Bin,
 }
 
-#[derive(Debug, Choices)]
-enum Tool {
-    Fmt,
-    Lint,
-}
-
 #[derive(Debug, Form)]
 struct Setup {
     #[ask("Project name", default = "my-app")]
@@ -33,26 +25,15 @@ struct Setup {
     #[ask(default = 8080)]
     port: u16,
     kind: Kind,
-    #[ask(optional)]
-    tools: Vec<Tool>,
 }
 
 fn main() -> Result<()> {
     let ui = Session::detect()?;
-    let setup = ui.ask(Setup::form())?;
+    let setup = ui.ask(Setup::form().port(Some(3000)))?;
     ui.outro(&format!("{setup:?}"))
 }
 ```
 
-Field options are `default`, `placeholder`, `validate`, `optional`, `parse`
-and `skip`. A field is a `String`, a number, `bool`, `Date`, `PathBuf`, an enum
-with `#[derive(Choices)]`, a `Vec<E>` or `Option<E>` of such an enum, or an
-`Option<String>` or `Option<number>`. Any other type that has `FromStr` and
-`Display` takes `#[ask(parse)]`. The [`core::askable`](crate::core::askable)
-page has the table, with what each field's `validate` check receives.
-
-`Setup::form()` has a setter per field that takes an `Option`, for answers that
-came from the command line. `ui.ask(Setup::form().name(args.name).port(args.port))`
-asks only the fields left `None`. Under [`Defaults::Take`](crate::core::settings::Defaults)
-an enum field takes its first variant, an `Option` field takes `None` and an
-`optional` `Vec` takes an empty list. `examples/derive.rs` runs the whole thing.
+`Setup::form()` has a setter per field taking an `Option`, and only the fields
+left `None` are asked. The [`core::askable`](crate::core::askable) page lists
+the field types and options.
