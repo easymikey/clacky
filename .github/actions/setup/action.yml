@@ -2,18 +2,13 @@ name: setup
 inputs:
   full:
     default: "false"
+  key:
+    default: ""
 runs:
   using: composite
   steps:
     - shell: bash
       run: rustup toolchain install
-    - if: inputs.full == 'true'
-      shell: bash
-      run: |
-        rustup toolchain install "$(sed -n 's/^nightly := "\(.*\)"/\1/p' justfile)" --profile minimal --component rustfmt
-        rustup toolchain install "$(sed -n 's/^msrv := "\(.*\)"/\1/p' justfile)" --profile minimal
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends libclang-dev
     - uses: actions/cache@v6
       with:
         path: |
@@ -23,9 +18,25 @@ runs:
           ~/.cargo/bin/cargo-binstall*
           .bin
           target
-        key: ${{ runner.os }}-${{ github.workflow }}-${{ hashFiles('Cargo.lock', 'Cargo.toml') }}
-        restore-keys: ${{ runner.os }}-${{ github.workflow }}-
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.workflow }}-${{ github.job }}-${{ inputs.key }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml') }}
+        restore-keys: ${{ runner.os }}-${{ runner.arch }}-${{ github.workflow }}-${{ github.job }}-${{ inputs.key }}-
     - shell: bash
       run: |
         command -v cargo-binstall || curl -fsSL https://raw.githubusercontent.com/cargo-bins/cargo-binstall/v1.26.2/install-from-binstall-release.sh | BINSTALL_VERSION=1.26.2 bash
         command -v cargo-bin || cargo install cargo-run-bin --locked
+    - if: inputs.full == 'true'
+      shell: bash
+      run: |
+        value() { sed -n "s/^$1 := \"\(.*\)\"/\1/p" justfile; }
+        nightly=$(value nightly) msrv=$(value msrv) zig=$(value zig)
+        [ -z "$nightly" ] || rustup toolchain install "$nightly" --profile minimal --component rustfmt
+        [ -z "$msrv" ] || rustup toolchain install "$msrv" --profile minimal
+        if [ "$RUNNER_OS" = Linux ]; then
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libclang-dev
+          if [ -n "$zig" ]; then
+            name=zig-$(uname -m)-linux-$zig
+            curl -fsSL "https://ziglang.org/download/$zig/$name.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
+            echo "$RUNNER_TEMP/$name" >> "$GITHUB_PATH"
+          fi
+        fi

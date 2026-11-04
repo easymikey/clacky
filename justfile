@@ -54,7 +54,7 @@ release:
     PATH="$(printf '%s:' "$PWD"/.bin/rust-*/cargo-semver-checks/*/bin)$PATH" cargo bin release-plz update
 
 publish:
-    cargo bin release-plz release --git-token "$GITHUB_TOKEN"
+    cargo bin release-plz release --git-token "${GITHUB_TOKEN:?set GITHUB_TOKEN}"
 
 clippy-no-default:
     cargo clippy --workspace --all-targets --no-default-features --locked -- -D warnings
