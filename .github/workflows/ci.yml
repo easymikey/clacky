@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    name: ci (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        # `just` recipes use `sh`, and one pipes through `grep`: Git bash
+        # gives the Windows runner both.
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      # The toolchains the justfile names: nightly for fmt, the MSRV for `msrv`.
+      - name: Toolchains
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup toolchain install nightly-2026-10-30 --profile minimal --component rustfmt
+          rustup toolchain install 1.85 --profile minimal
+          rustup default stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/cargo-bin*
+            .bin
+            target
+          key: ${{ runner.os }}-ci-${{ hashFiles('Cargo.lock', 'Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-ci-
+      - name: cargo-run-bin
+        run: command -v cargo-bin || cargo install cargo-run-bin --locked
+      - run: cargo bin just ci
