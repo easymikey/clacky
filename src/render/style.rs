@@ -1,5 +1,5 @@
-//! How text is painted: colors, styles, the theme that names a style per
-//! role, and the skin that paints with a theme and a set of symbols.
+//! How text is painted: colors, styles, the theme that names a style per role,
+//! and the skin that paints with a theme and a set of symbols.
 
 use std::{env, ffi::OsStr, fmt::Write as _};
 
@@ -69,8 +69,8 @@ pub enum Color {
     Bright(BaseColor),
     /// A place in the 256 color palette.
     Ansi256(u8),
-    /// A true color; drawn as the nearest palette color where the terminal
-    /// does not announce [`ColorDepth::TrueColor`].
+    /// A true color; drawn as the nearest palette color where the terminal does
+    /// not announce [`ColorDepth::TrueColor`].
     Rgb(u8, u8, u8),
 }
 
@@ -350,8 +350,7 @@ impl Style {
     }
 
     /// `text` in this style: the foreground, the background, then the
-    /// attributes, each as its own escape, and a reset after the text. Plain
-    /// text, and an empty style, add nothing.
+    /// attributes, each as its own escape, and a reset after the text.
     #[must_use]
     pub fn paint(self, color: ColorChoice, depth: ColorDepth, text: &str) -> String {
         const RESET: &str = "\x1b[0m";
@@ -460,8 +459,8 @@ impl Theme {
         }
     }
 
-    /// Attributes only, no colors: for terminals that show bold and dim but
-    /// not color.
+    /// Attributes only, no colors: for terminals that show bold and dim but not
+    /// color.
     #[must_use]
     pub const fn mono() -> Self {
         let dim = Style::new().dim();
@@ -490,9 +489,8 @@ impl Theme {
     }
 }
 
-/// Everything that decides how text looks: whether it is colored, how deep
-/// the colors can go, the theme, the symbols, the rail and the texts. The
-/// session owns one.
+/// Everything that decides how text looks: whether it is colored, how deep the
+/// colors can go, the theme, the symbols, the rail and the texts.
 #[derive(Debug, Clone)]
 pub struct Skin {
     color: ColorChoice,
@@ -504,8 +502,7 @@ pub struct Skin {
 }
 
 impl Skin {
-    /// The clack theme and the unicode symbols, with colors as deep as they
-    /// go.
+    /// The clack theme and the unicode symbols, with colors as deep as they go.
     #[must_use]
     pub const fn new(color: ColorChoice) -> Self {
         Self {
@@ -604,8 +601,8 @@ impl Skin {
         style.paint(self.color, self.depth, text)
     }
 
-    /// `text` with what sits between backticks in the code style, the
-    /// backticks gone; plain text keeps them.
+    /// `text` with what sits between backticks in the code style, the backticks
+    /// gone; plain text keeps them.
     #[must_use]
     pub fn code(&self, text: &str) -> String {
         self.code_on(text, str::to_owned)

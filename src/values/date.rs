@@ -12,9 +12,6 @@ const MAX_YEAR: u16 = 9999;
 const SEED_YEAR: u16 = 2000;
 
 /// A day in the proleptic Gregorian calendar, years 1 to 9999.
-///
-/// Fields are private so that every `Date` is a real day; the order of the
-/// fields makes the derived ordering chronological.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Date {
     year: u16,

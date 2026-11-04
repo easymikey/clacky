@@ -68,8 +68,8 @@ pub struct KeyMap {
 }
 
 impl KeyMap {
-    /// The arrows, Tab, Space, Enter and Esc, plus clack's aliases: `k` `j`
-    /// `h` `l` for the arrows and `a` for all.
+    /// The arrows, Tab, Space, Enter and Esc, plus clack's aliases: `k` `j` `h`
+    /// `l` for the arrows and `a` for all.
     #[must_use]
     pub fn clack() -> Self {
         Self {
@@ -91,8 +91,8 @@ impl KeyMap {
         }
     }
 
-    /// Binds `key` to `action`, replacing any earlier binding. Ctrl-C and
-    /// Ctrl-D cannot be rebound.
+    /// Binds `key` to `action`, replacing any earlier one; Ctrl-C and Ctrl-D
+    /// cannot be rebound.
     #[must_use]
     pub fn bind(self, key: Key, action: Action) -> Self {
         let mut keys = self.unbind(key);
@@ -130,8 +130,8 @@ impl KeyMap {
     }
 }
 
-/// Keys a prompt reads as an action when it sees them, so unbinding one
-/// must not leave it working.
+/// Keys a prompt reads as an action when it sees them, so unbinding one must
+/// not leave it working.
 const fn has_action(key: Key) -> bool {
     matches!(
         key,

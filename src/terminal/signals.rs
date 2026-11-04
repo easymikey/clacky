@@ -1,7 +1,4 @@
 //! Signal handling while the terminal is altered.
-//! Ctrl-C is counted only while a [`Catching`] lives. SIGTERM and SIGHUP, while
-//! a `Terminating` guard lives, restore the terminal and re-raise with the
-//! default action.
 use std::sync::{
     Mutex,
     PoisonError,
@@ -41,8 +38,8 @@ pub fn interrupts() -> u64 {
 
 #[must_use = "Ctrl-C is caught only while the guard lives"]
 #[derive(Debug)]
-/// Catches and counts Ctrl-C while it lives. Dropping the last one restores
-/// the previous handler.
+/// Catches and counts Ctrl-C while it lives; dropping the last one restores the
+/// previous handler.
 pub struct Catching {
     holds: bool,
 }
@@ -144,8 +141,7 @@ mod terminating {
     #[must_use = "SIGTERM and SIGHUP are handled only while the guard lives"]
     #[derive(Debug)]
     /// While this lives, SIGTERM and SIGHUP put the terminal back and show the
-    /// cursor before ending the program. Dropping the last one restores the
-    /// previous handlers.
+    /// cursor before ending the program.
     pub(crate) struct Terminating;
 
     impl Terminating {
@@ -174,8 +170,8 @@ mod terminating {
         }
     }
 
-    /// Runs as the signal handler. It takes the lock only if it is free: a
-    /// signal that comes while a guard starts or drops skips the restore.
+    /// Runs as the signal handler; it skips the restore if a guard starts or
+    /// drops at that moment.
     extern "C" fn on_terminate(signal: libc::c_int) {
         let settings = STATE.try_lock().ok().and_then(|state| state.settings);
         let cursor_hidden = super::CURSOR_HIDDEN.load(Ordering::SeqCst);
@@ -214,8 +210,7 @@ mod terminating {
         reason = "`sigaction` stores a handler as an integer"
     )]
     /// Takes over `signal` only when it has its default action, which would
-    /// kill the program with the terminal still quiet. An ignored or handled
-    /// signal is the program's own business.
+    /// kill the program with the terminal still quiet.
     fn replace(signal: libc::c_int) -> Option<libc::sigaction> {
         // SAFETY: an all-zero `sigaction` is valid, `sigaction` fills it in.
         let mut saved: libc::sigaction = unsafe { mem::zeroed() };

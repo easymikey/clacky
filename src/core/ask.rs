@@ -60,9 +60,7 @@ impl<S> Next<S> {
 pub enum Phase<'a> {
     /// Open: the rows between the question and the closing corner.
     Active,
-    /// Open after an answer was refused for this reason. The runner draws the
-    /// warning; the rows are those of [`Active`](Self::Active), which a prompt
-    /// may tint with the warning's color.
+    /// Open after an answer was refused for this reason.
     Warned(&'a str),
     /// Answered: the rows that stay under the question.
     Submitted,
@@ -179,10 +177,6 @@ impl Extend<String> for Frame {
 }
 
 /// One interactive question as pure functions, with no terminal and no clock.
-///
-/// The runner calls [`start`](Self::start) once, then [`update`](Self::update)
-/// and [`view`](Self::view) for each key, until the state is submitted and
-/// [`finish`](Self::finish) moves the answer out of the prompt.
 pub trait Prompt: Sized {
     /// What the question answers with.
     type Output;
@@ -193,6 +187,7 @@ pub trait Prompt: Sized {
     fn message(&self) -> &str;
 
     /// The state the question opens with.
+    ///
     /// # Errors
     /// There is nothing to ask, for example a choice without options.
     fn start(&self) -> Result<Self::State>;
@@ -205,6 +200,7 @@ pub trait Prompt: Sized {
     fn view(&self, state: &Self::State, phase: Phase<'_>, frame: &mut Frame);
 
     /// The answer a submitted state stands for.
+    ///
     /// # Errors
     /// The state names no answer.
     fn finish(self, state: Self::State) -> Result<Self::Output>;
@@ -215,8 +211,8 @@ pub trait Prompt: Sized {
         Vec::new()
     }
 
-    /// The keys a typed line stands for on a terminal without keys. By
-    /// default the characters, then Enter.
+    /// The keys a typed line stands for on a terminal without keys. By default
+    /// the characters, then Enter.
     #[must_use]
     fn typed(&self, line: &str, _messages: &Messages) -> Vec<Key> {
         line.trim()
@@ -241,8 +237,7 @@ pub trait Prompt: Sized {
         None
     }
 
-    /// How typed characters show. A secret is masked and read with the
-    /// terminal's echo off.
+    /// How typed characters show; a secret is masked and read with echo off.
     #[must_use]
     fn echo(&self) -> Echo {
         Echo::Shown
@@ -284,8 +279,6 @@ pub trait Prompt: Sized {
     }
 
     /// Takes the answer from `line`, say a variable or a file, without asking.
-    /// It is read as a typed line is, and a line the question refuses gives
-    /// [`Error::Refused`]. With `None` the question is asked as usual.
     #[must_use]
     fn given_line(self, line: Option<&str>) -> GivenLine<Self> {
         GivenLine {
@@ -295,6 +288,7 @@ pub trait Prompt: Sized {
     }
 
     /// Runs the question on `keys` without a terminal.
+    ///
     /// # Errors
     /// Esc gives [`Error::Cancelled`], Ctrl-C [`Error::Interrupted`], keys
     /// that run out before the answer [`Error::NoInput`], and keys that run
@@ -352,13 +346,13 @@ pub trait Peek: Prompt {
     where
         Self: 'a;
 
-    /// The answer `state` stands for, by reference; `None` while there is
-    /// none yet.
+    /// The answer `state` stands for, by reference; `None` while there is none
+    /// yet.
     #[must_use]
     fn peek<'a>(&'a self, state: &'a Self::State) -> Option<Self::Peeked<'a>>;
 
-    /// Keeps the question open while `check` returns an error; the error's
-    /// text is the warning.
+    /// Keeps the question open while `check` returns an error; the error's text
+    /// is the warning.
     #[must_use]
     fn validate<E: Display, F>(self, check: F) -> Validate<Self, F>
     where
@@ -367,7 +361,7 @@ pub trait Peek: Prompt {
         Validate { inner: self, check }
     }
 
-    /// Answers with the text read as a `T`. While it does not parse, the
+    /// Answers with the text read as a `T`; while it does not parse, the
     /// question stays open under the `T::Err` message.
     #[must_use]
     fn parse<T: FromStr>(self) -> Parse<Self, T>
@@ -611,8 +605,8 @@ where
 /// A prompt that can show an answer the caller already has, which is what
 /// [`given`](Self::given) prints.
 pub trait Prefill: Prompt {
-    /// The text the answered frame shows for `answer`. `None` when the
-    /// question cannot have that answer, such as a choice without that option.
+    /// The text the answered frame shows for `answer`; `None` when the question
+    /// cannot have that answer.
     #[must_use]
     fn shown_for(&self, answer: &Self::Output, messages: &Messages) -> Option<String>;
 
@@ -623,8 +617,8 @@ pub trait Prefill: Prompt {
         Refusal::Said(messages.not_an_option.to_string())
     }
 
-    /// Takes `answer` without asking. The answered frame is printed and the
-    /// value comes back unchecked. With `None` the question is asked as usual.
+    /// Takes `answer` without asking; the value comes back unchecked, and with
+    /// `None` the question is asked.
     #[must_use]
     fn given(self, answer: Option<Self::Output>) -> Given<Self> {
         Given {
@@ -728,9 +722,9 @@ pub trait Ask: Sized {
         Map { inner: self, f }
     }
 
-    /// Ends the question from outside when `abort` fires. The cancelled frame
-    /// is drawn and the result is [`Error::Aborted`]. An `abort` that fired
-    /// before the question started ends it at once, without drawing.
+    /// Ends the question from outside when `abort` fires, with
+    /// [`Error::Aborted`]; an `abort` that fired before the question started
+    /// ends it at once.
     #[doc(alias = "signal")]
     #[must_use]
     fn abort(self, abort: &Abort) -> Aborting<Self> {
@@ -828,8 +822,9 @@ ask_tuple!(A a, B b, C c, D d, E e, F f, G g, H h);
 
 /// Turns Esc into a value instead of an error.
 pub trait CancelAsNone<T> {
-    /// `Ok(None)` when the person pressed Esc. Ctrl-C stays
+    /// `Ok(None)` when the person pressed Esc; Ctrl-C stays
     /// [`Error::Interrupted`].
+    ///
     /// # Errors
     /// Any error but [`Error::Cancelled`].
     fn cancel_as_none(self) -> Result<Option<T>>;

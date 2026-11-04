@@ -86,8 +86,8 @@ pub trait Files: std::fmt::Debug {
     }
 }
 
-/// The directories listed so far in one prompt run, so that a key does not
-/// list a directory again.
+/// The directories listed so far in one prompt run, so that a key does not list
+/// a directory again.
 #[derive(Debug, Default)]
 pub(crate) struct Listings {
     seen: RefCell<HashMap<PathBuf, Result<Vec<DirEntry>, io::ErrorKind>>>,
@@ -121,8 +121,7 @@ impl Files for Cached<'_> {
     }
 }
 
-/// The real file system. This is the only place in the crate that uses
-/// `std::fs`.
+/// The real file system.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct StdFiles;
 
@@ -159,9 +158,6 @@ impl Files for StdFiles {
 }
 
 /// In-memory file system built from a list of paths.
-///
-/// A path ending in `/` is a directory, any other is a file; parents are
-/// directories.
 #[cfg(any(test, feature = "fake"))]
 #[derive(Clone, Debug, Default)]
 pub struct FakeFiles {
@@ -236,8 +232,8 @@ fn starts_with(name: &str, prefix: &str) -> bool {
 
 /// Candidate completions for `typed`: names (directories end with the
 /// separator) of the entries in the typed directory that start with the typed
-/// prefix. Directories come first, then by name. Relative input resolves
-/// against `root`. An unreadable or missing directory gives no candidates.
+/// prefix. Directories come first, then by name; an unreadable directory gives
+/// no candidates.
 pub fn suggest(
     typed: &str,
     root: &Path,

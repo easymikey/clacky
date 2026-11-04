@@ -38,8 +38,8 @@ use crate::terminal::{
     tty::{handle, mode_of, set_mode},
 };
 
-/// Switches the console to show escapes and says whether stderr does. A stream
-/// that is no console, such as a mintty pty, counts as showing them.
+/// Switches the console to show escapes and says whether stderr does; a stream
+/// that is no console counts as showing them.
 pub(super) fn enable_ansi_on_stderr() -> bool {
     handle(STD_ERROR_HANDLE).is_ok_and(|stderr| {
         mode_of(stderr).map_or(true, |mode| {
@@ -149,10 +149,8 @@ fn wait_for_input(stdin: HANDLE, abort: &Abort) -> io::Result<bool> {
     }
 }
 
-/// The next line of stdin, or [`LineRead::Aborted`] if `abort` ended first. A
-/// thread reads it, because a handle of piped input cannot be waited on for a
-/// line. A read that `abort` cut short goes on in its thread, and the next call
-/// takes its line.
+/// The next line of stdin, or [`LineRead::Aborted`] if `abort` ended first; a
+/// cut-short read goes on in its thread.
 pub(super) fn read_line(abort: &Abort) -> io::Result<LineRead> {
     static READING: Mutex<Option<Receiver<io::Result<Option<String>>>>> =
         Mutex::new(None);

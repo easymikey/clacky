@@ -23,9 +23,7 @@ enum Progress {
 }
 
 /// The next key from `next_byte`, which waits at most the given time and gives
-/// `Ok(None)` when it runs out. With no time (before a key's first byte) it
-/// waits as long as the question lives, and `Ok(None)` then means the question
-/// ended and there is no key.
+/// `Ok(None)` when it runs out, or, with no time, when the question ended.
 pub(super) fn read(
     mut next_byte: impl FnMut(Option<Duration>) -> io::Result<Option<u8>>,
 ) -> io::Result<Option<Key>> {

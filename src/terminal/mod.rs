@@ -1,5 +1,4 @@
-//! The [`Terminal`] trait, [`Console`] over the real terminal, and key
-//! reading.
+//! The [`Terminal`] trait, [`Console`] over the real terminal, and key reading.
 
 use std::io::{self, IsTerminal as _, Write as _};
 
@@ -38,8 +37,7 @@ pub enum LineRead {
     Line(String),
     /// The input ended; no line is left.
     End,
-    /// The [`Abort`] fired first. No line was taken, and whatever was typed of
-    /// one stays in the input for the next read.
+    /// The [`Abort`] fired first.
     Aborted,
 }
 
@@ -54,14 +52,13 @@ pub enum TerminalKind {
     Redirected,
 }
 
-/// Where a session reads keys and lines and writes its output. [`Console`] is
-/// the real one, [`fake::Script`](crate::fake::Script) the scripted one.
+/// Where a session reads keys and lines and writes its output.
 pub trait Terminal {
     /// The guard of a quieted terminal; dropping it restores the terminal.
     type QuietTerminal: std::fmt::Debug;
 
     /// Quiets the terminal until the guard is dropped: no echo on a live one,
-    /// so Ctrl-C prints no `^C`. A question and live output hold the guard.
+    /// so Ctrl-C prints no `^C`.
     fn quiet(&self) -> Self::QuietTerminal;
 
     /// How many Ctrl-C signals were caught since the program started.
@@ -81,25 +78,27 @@ pub trait Terminal {
     fn width(&self) -> Option<usize>;
 
     /// Writes `text` as is, escapes included, and flushes.
+    ///
     /// # Errors
     /// The terminal could not be written.
     fn write(&self, text: &str) -> io::Result<()>;
 
-    /// The next keystroke ([`TerminalKind::Live`] only), or
-    /// [`Press::Aborted`] as soon as `abort` fires, also while the read is
-    /// blocked on input.
+    /// The next keystroke ([`TerminalKind::Live`] only), or [`Press::Aborted`]
+    /// as soon as `abort` fires, also while the read is blocked on input.
+    ///
     /// # Errors
     /// The terminal could not be read.
     fn keystroke(&self, abort: &Abort) -> io::Result<Press>;
 
-    /// The next line of stdin without its line ending, or
-    /// [`LineRead::Aborted`] as soon as `abort` fires, also while the read is
-    /// blocked on input.
+    /// The next line of stdin without its line ending, or [`LineRead::Aborted`]
+    /// as soon as `abort` fires, also while the read is blocked on input.
+    ///
     /// # Errors
     /// The terminal could not be read.
     fn line(&self, abort: &Abort) -> io::Result<LineRead>;
 
     /// Runs `work` with the echo off and restores it however `work` ends.
+    ///
     /// # Errors
     /// The terminal mode could not be changed.
     fn hidden<R>(&self, work: impl FnOnce(&Self) -> R) -> io::Result<R>;
@@ -108,9 +107,8 @@ pub trait Terminal {
     /// shell.
     fn discard_typeahead(&self);
 
-    /// Resolves on the next Ctrl-C after the call. Keep a
-    /// [`catch_interrupts`](Self::catch_interrupts) guard while awaiting it,
-    /// or the signal is not counted.
+    /// Resolves on the next Ctrl-C after the call; keep a
+    /// [`catch_interrupts`](Self::catch_interrupts) guard while awaiting it.
     #[cfg(feature = "tokio")]
     fn interrupt(&self) -> impl Future<Output = ()>;
 }
@@ -123,8 +121,8 @@ pub struct Console {
 }
 
 impl Console {
-    /// Checks which of the process's streams are terminals, and reads the
-    /// color variables.
+    /// Checks which of the process's streams are terminals, and reads the color
+    /// variables.
     #[must_use]
     pub fn detect(term_type: TerminalType) -> Self {
         #[cfg(windows)]

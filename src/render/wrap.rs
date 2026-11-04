@@ -22,11 +22,8 @@ impl Item<'_> {
 }
 
 /// Rows of at most `width` columns, each led by `prefix` (which counts toward
-/// the width). Rows break at spaces; a word longer than a row breaks between
-/// graphemes; a grapheme wider than the row stands alone and overflows. Lines
-/// keep their `\n` breaks and the runs of spaces inside them; spaces at a
-/// break are dropped. A style open at the end of a row is closed there and
-/// opened again on the next row.
+/// the width). Rows break at spaces; a longer word breaks between graphemes;
+/// `\n` breaks stay.
 pub(crate) fn wrap(text: &str, width: usize, prefix: &str) -> Vec<String> {
     let mut wrapper = Wrapper {
         avail: width.saturating_sub(measure_text_width(prefix)).max(1),

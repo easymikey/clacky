@@ -211,11 +211,10 @@ pub struct Session<T: Terminal> {
 }
 
 impl Session<Console> {
-    /// A session on the real terminal. Terminal kind, color, color depth,
-    /// symbols and output mode come from the process environment (`TERM`,
-    /// `COLORTERM`, `NO_COLOR`, `CLICOLOR`, `CLICOLOR_FORCE`, and on Windows
-    /// `WT_SESSION` and `TERM_PROGRAM`). This is the only place the library
-    /// reads the environment.
+    /// A session on the real terminal; the only place the library reads the
+    /// environment (`TERM`, `COLORTERM`, `NO_COLOR`, `CLICOLOR`,
+    /// `CLICOLOR_FORCE`).
+    ///
     /// # Errors
     /// The terminal could not be set up.
     pub fn detect() -> Result<Self> {
@@ -234,8 +233,7 @@ impl Session<Console> {
 }
 
 impl<T: Terminal> Session<T> {
-    /// A session on `term`. It writes nothing until a question or output call
-    /// runs.
+    /// A session on `term`.
     pub fn new(term: T, settings: Settings) -> Self {
         Self {
             settings,
@@ -247,9 +245,8 @@ impl<T: Terminal> Session<T> {
     }
 
     /// Ends every question the session asks, running or later, when `abort`
-    /// fires. The question fails with [`Error::Aborted`] after drawing the
-    /// cancelled frame, or at once on a dumb or redirected input, which has no
-    /// frame. A second call replaces the first.
+    /// fires; the question fails with [`Error::Aborted`], and a second call
+    /// replaces the first.
     #[must_use]
     pub fn abort(mut self, abort: Abort) -> Self {
         self.abort = abort;
@@ -329,8 +326,7 @@ impl<T: Terminal> Session<T> {
         &self.settings.skin
     }
 
-    /// Paints with `theme`. Without color (`NO_COLOR`, not a terminal)
-    /// nothing is painted whatever the theme.
+    /// Paints with `theme`; without color nothing is painted.
     #[must_use]
     pub fn theme(mut self, theme: Theme) -> Self {
         self.settings.skin = self.settings.skin.with_theme(theme);
@@ -384,9 +380,9 @@ impl<T: Terminal> Session<T> {
     }
 
     /// Asks the prompt `make` builds and runs `attempt` on the answer while
-    /// `label` shows a spinner. If the attempt fails and `retry` returns a
-    /// warning for the error, a fresh prompt is asked under that warning, up to
-    /// `tries` times in all. A redirected input is asked once.
+    /// `label` shows a spinner; a failed attempt is retried up to `tries` times
+    /// when `retry` gives a warning, and a redirected input is asked once.
+    ///
     /// # Errors
     /// The terminal failed, or the person stopped the question. When the tries
     /// run out, the last attempt error is in the inner `Result`.
@@ -435,6 +431,7 @@ impl<T: Terminal> Session<T> {
 
     /// Runs a question, or a tuple of questions in order, and returns the
     /// answers.
+    ///
     /// # Errors
     /// The terminal failed, or the person stopped the question.
     pub fn ask<A: Ask>(&self, question: A) -> Result<A::Output> {
@@ -846,8 +843,9 @@ impl<T: Terminal> Session<T> {
         self.write(&draw::answered(self.skin(), label, value))
     }
 
-    /// Awaits `work` under a spinner labelled `label`. Without a live terminal
+    /// Awaits `work` under a spinner labelled `label`; without a live terminal
     /// nothing is drawn.
+    ///
     /// # Errors
     /// The terminal failed, or Ctrl-C ended the wait.
     #[cfg(feature = "tokio")]

@@ -1,5 +1,5 @@
-//! The glyphs the library draws, as a value: unicode, or the ASCII set of
-//! clack for terminals that cannot show them.
+//! The glyphs the library draws, as a value: unicode, or the ASCII set of clack
+//! for terminals that cannot show them.
 
 use std::{env, ffi::OsStr};
 
@@ -203,8 +203,8 @@ impl Symbols {
         }
     }
 
-    /// Unicode in Windows Terminal, a terminal that names its program, and
-    /// the `TERM`s of terminals that were made for it.
+    /// Unicode in Windows Terminal, a terminal that names its program, and the
+    /// `TERM`s of terminals that were made for it.
     #[must_use]
     pub fn on_windows(
         term: Option<&OsStr>,

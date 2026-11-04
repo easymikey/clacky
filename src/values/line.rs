@@ -1,5 +1,4 @@
-//! Pure line editor: a [`TypedAnswer`] and a [`Key`] give the next
-//! answer.
+//! Pure line editor: a [`TypedAnswer`] and a [`Key`] give the next answer.
 
 #[cfg(test)] mod tests;
 

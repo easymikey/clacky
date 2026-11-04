@@ -1,11 +1,8 @@
 //! One field list per settings struct: the struct and a builder method per
 //! field come from the same lines, so the two cannot drift apart.
 
-/// Declares a settings struct whose fields stay public and get a
-/// `#[must_use]` setter each, named like the field, with the field's doc.
-///
-/// A field written `name: Type => Param` takes `impl Into<Param>` in its
-/// setter, which makes that setter non-`const`.
+/// Declares a settings struct whose fields stay public and get a `#[must_use]`
+/// setter each, named like the field, with the field's doc.
 macro_rules! settings {
     (
         $(#[$meta:meta])*

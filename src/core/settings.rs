@@ -12,9 +12,7 @@ pub enum OutputMode {
     /// Prompts redraw in place and the spinner turns.
     #[default]
     Animated,
-    /// No redraws and no cursor moves. A prompt prints its question once and
-    /// each change as a new line; a spinner prints one line when it starts and
-    /// one when it ends. Suits screen readers and logs.
+    /// No redraws and no cursor moves.
     Accessible,
 }
 

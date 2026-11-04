@@ -184,8 +184,8 @@ impl Tone {
     }
 }
 
-/// A log entry: the symbol and the first line, the rest on the rail, then
-/// a bar so the next element starts below it.
+/// A log entry: the symbol and the first line, the rest on the rail, then a bar
+/// so the next element starts below it.
 #[must_use]
 pub fn log(skin: &Skin, tone: Tone, message: &str) -> String {
     log_entry(skin, &tone.symbol(skin), message, 1)

@@ -12,9 +12,9 @@ pub enum Error {
     Interrupted,
     /// Esc, or Ctrl-D on an empty line.
     Cancelled,
-    /// Ended from outside: a [`Stop`](crate::terminal::abort::Stop) was
-    /// called or a timeout ran out. The person did not back out, so
-    /// [`CancelAsNone`](crate::core::ask::CancelAsNone) leaves it an error.
+    /// Ended from outside, so [`CancelAsNone`](crate::core::ask::CancelAsNone)
+    /// leaves it an error: a [`Stop`](crate::terminal::abort::Stop) was called
+    /// or a timeout ran out.
     Aborted,
     /// The input ended before the answer.
     NoInput,

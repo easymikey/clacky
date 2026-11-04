@@ -1,5 +1,4 @@
-//! The traits behind the derives: `#[derive(Choices)]` implements them for
-//! enums and `#[derive(Form)]` builds `Type::form()` for structs.
+//! The traits behind `#[derive(Choices)]` and `#[derive(Form)]`.
 //!
 //! These types can be struct fields out of the box:
 //!
@@ -15,23 +14,12 @@
 //! | `Option<String>`, `Option<number>` | text (read as a number) | none yet | `None` |
 //! | `Option<E>` of such an enum | select with a last "Skip" | none yet | the first variant |
 //!
-//! The "Skip" row comes from
-//! [`Messages::skip`](crate::render::messages::Messages::skip), so it follows
-//! the session's language.
+//! # Defaults
 //!
-//! Under [`Defaults::Take`](crate::core::settings::Defaults::Take) a field
-//! with no `default` fails with
-//! [`Error::NoDefault`](crate::core::error::Error::NoDefault), except where
-//! nothing is a fine answer: an enum takes its first variant, an
-//! `Option<E>` takes `None` (the Skip row), an `Option<String>` or
-//! `Option<number>` takes `None`, and an `optional` `Vec` takes an empty list.
-//!
-//! Any other type that reads from text opts in with `#[ask(parse)]` on the
-//! field; it needs [`FromStr`] with a `Display` error, and
-//! `Display` itself, which shows the answer when the form is given one.
-//!
-//! The derives write paths that start with `::clacky::`, so the dependency
-//! must be named `clacky`; a renamed one does not work.
+//! Under [`Defaults::Take`](crate::core::settings::Defaults::Take) a field with
+//! no `default` fails with
+//! [`Error::NoDefault`](crate::core::error::Error::NoDefault), except an enum,
+//! an `Option`, and an `optional` `Vec`.
 //!
 //! # Field options
 //!
@@ -99,13 +87,12 @@ pub trait Choices: Sized {
     #[must_use]
     fn choices() -> Vec<Choice<Self>>;
 
-    /// The label of the option for `self`. A given answer is matched to an
-    /// option by label, so `Self` needs no `PartialEq`.
+    /// The label of the option for `self`.
     #[must_use]
     fn label(&self) -> &'static str;
 
     /// A select over [`choices`](Self::choices) that matches a given answer by
-    /// [`label`](Self::label). The cursor starts on the first option.
+    /// [`label`](Self::label).
     #[must_use]
     fn select(message: &str) -> Select<Self, ByLabel<Self>> {
         select(message)
@@ -116,9 +103,6 @@ pub trait Choices: Sized {
 }
 
 /// An [`Answer`] type that takes `placeholder` and `default` options.
-///
-/// What a type does not take is [`Infallible`]: giving it one is a type
-/// error, so `placeholder` on a `bool` does not compile.
 #[doc(hidden)]
 #[diagnostic::on_unimplemented(
     message = "`placeholder` and `default` do not go on a `{Self}` field",
@@ -141,7 +125,7 @@ pub trait Fillable: Answer {
 }
 
 /// An answer that may be empty: a blank line is `None`, anything else is read
-/// as a `T`. Behind `Option<String>` and `Option<number>` fields.
+/// as a `T`.
 #[derive(Debug)]
 #[doc(hidden)]
 pub struct Blank<T>(Option<T>);
@@ -194,14 +178,14 @@ impl<T, P: Ask<Output = Blank<T>>> Ask for OrBlank<P> {
 }
 
 /// A question that can take its answer ready-made, as a derived form asks each
-/// field. Every [`Prefill`] prompt is one, and so is an [`OrBlank`] of one.
+/// field.
 #[doc(hidden)]
 pub trait Giving: Ask {
     /// The question that skips itself when it has an answer.
     type Given: Ask<Output = Self::Output>;
 
-    /// Takes `answer` when there is one (printing the answered frame), asks
-    /// as usual otherwise.
+    /// Takes `answer` when there is one (printing the answered frame), asks as
+    /// usual otherwise.
     #[must_use]
     fn give(self, answer: Option<Self::Output>) -> Self::Given;
 }
@@ -402,8 +386,7 @@ impl Fillable for Date {
     }
 }
 
-/// Zero or more of the variants; at least one unless the field says
-/// `optional`.
+/// Zero or more of the variants; at least one unless the field says `optional`.
 impl<E: Choices> Answer for Vec<E> {
     type Prompt = MultiSelect<E, ByLabel<E>>;
 
@@ -414,8 +397,7 @@ impl<E: Choices> Answer for Vec<E> {
 
 /// The question of an `Option<E>` field: the variants and a last option,
 /// labelled [`Messages::skip`](crate::render::messages::Messages::skip), that
-/// answers `None`. Under `Defaults::Take` it takes that last option. The cursor
-/// starts on the first variant.
+/// answers `None`. Under `Defaults::Take` it takes that last option.
 #[derive(Debug)]
 #[doc(hidden)]
 pub struct Skippable<E> {

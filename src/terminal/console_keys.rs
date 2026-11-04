@@ -1,5 +1,4 @@
-//! Maps Windows console key records to keys. It calls no Windows API, so the
-//! table is tested on every OS.
+//! Maps Windows console key records to keys.
 
 use std::io;
 
@@ -46,8 +45,7 @@ impl KeyInput {
 }
 
 /// The key of a press; `None` for keys that mean nothing here, such as Shift
-/// alone, F-keys or a broken UTF-16 pair. `next` is called only when the first
-/// half of a surrogate pair needs its second.
+/// alone, F-keys or a broken UTF-16 pair.
 pub(super) fn keystroke_of(
     press: KeyInput,
     next: impl FnOnce() -> io::Result<KeyInput>,

@@ -35,8 +35,7 @@ pub(crate) enum TerminalQuiet {
     Keys,
 }
 
-/// How many guards of each kind live. The terminal is as quiet as the quietest
-/// of them, whatever order they end in.
+/// How many guards of each kind live.
 #[derive(Debug, Clone, Copy, Default)]
 struct Holders {
     echo: usize,
@@ -204,9 +203,8 @@ mod imp {
 
     use crate::terminal::{LineRead, abort::Abort, tty::TerminalQuiet};
 
-    /// What was read from stdin past the last line handed out. A stop that
-    /// arrives while a line is half typed leaves the half here for the next
-    /// read.
+    /// What was read from stdin past the last line handed out; a stop mid-line
+    /// leaves the half here.
     static PENDING: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 
     pub(super) type TerminalSettings = libc::termios;
@@ -266,8 +264,8 @@ mod imp {
         unsafe { libc::tcflush(libc::STDIN_FILENO, libc::TCIFLUSH) };
     }
 
-    /// The next byte of stdin. `None` when none came within `wait`, or, with
-    /// no `wait`, when `abort` ended.
+    /// The next byte of stdin; `None` when none came within `wait`, or, with no
+    /// `wait`, when `abort` ended.
     pub(crate) fn next_byte(
         wait: Option<Duration>,
         abort: &Abort,
@@ -275,8 +273,8 @@ mod imp {
         byte_from(libc::STDIN_FILENO, wait, abort)
     }
 
-    /// The next line of stdin. Waits as [`next_byte`] does; what `abort` cut
-    /// short of a line stays for the next call.
+    /// The next line of stdin; what `abort` cut short of a line stays for the
+    /// next call.
     pub(crate) fn next_line(abort: &Abort) -> io::Result<LineRead> {
         let mut pending = PENDING.lock().unwrap_or_else(PoisonError::into_inner);
         line_from(libc::STDIN_FILENO, &mut pending, abort)
@@ -715,8 +713,7 @@ mod imp {
         }
     }
 
-    /// Runs on a thread of its own. Returning 0 passes the event on, so the
-    /// process ends as it would have.
+    /// Runs on a thread of its own.
     unsafe extern "system" fn on_event(_: u32) -> BOOL {
         drop(restore());
         0

@@ -67,8 +67,8 @@ settings! {
         keys_autocomplete: Cow<'static, str> => Cow<'static, str>,
         /// The key row of an autocomplete multiselect.
         keys_autocomplete_multiselect: Cow<'static, str> => Cow<'static, str>,
-        /// The key row of an autocomplete multiselect while the cursor is in the
-        /// list.
+        /// The key row of an autocomplete multiselect while the cursor is in
+        /// the list.
         keys_autocomplete_multiselect_navigating: Cow<'static, str> => Cow<'static, str>,
         /// The key row of a number prompt.
         keys_number: Cow<'static, str> => Cow<'static, str>,
@@ -133,8 +133,8 @@ settings! {
         error_no_input: Cow<'static, str> => Cow<'static, str>,
         /// The error of a choice prompt without options.
         error_no_choices: Cow<'static, str> => Cow<'static, str>,
-        /// The error of a question without a default that must answer by defaults;
-        /// given its label.
+        /// The error of a question without a default that must answer by
+        /// defaults; given its label.
         error_no_default: fn(&str) -> String,
         /// The error of a question asked while a spinner runs.
         error_busy: Cow<'static, str> => Cow<'static, str>,
@@ -273,8 +273,8 @@ impl Messages {
         }
     }
 
-    /// What `error` says in these texts. The check or the person's own words
-    /// of an invalid answer stand as they are.
+    /// What `error` says in these texts; a check or the person's own words
+    /// stand as they are.
     #[must_use]
     pub fn error(&self, error: &Error) -> String {
         match error {
@@ -293,8 +293,7 @@ impl Messages {
     }
 }
 
-/// Why an answer is not taken. The built-in reasons are worded by the
-/// session's [`Messages`], the others carry their own text.
+/// Why an answer is not taken.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Refusal {
     /// A reason with its own text, for example what a check said.

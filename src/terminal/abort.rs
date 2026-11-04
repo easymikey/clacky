@@ -11,24 +11,21 @@ use std::{
 
 #[derive(Debug, Clone, Default)]
 /// What ends a question from outside: a [`Stop`] called or a deadline reached.
-/// The default never ends. Pass it to a question with
-/// [`Ask::abort`](crate::core::ask::Ask::abort) or to a session with
-/// [`Session::abort`](crate::core::session::Session::abort).
+/// The default never ends.
 pub struct Abort {
     stops: Vec<Arc<Flag>>,
     deadline: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
-/// Ends the questions that carry its [`Abort`]. It is `Send + Sync`, so any
-/// thread or async task can hold it.
+/// Ends the questions that carry its [`Abort`].
 pub struct Stop(Arc<Flag>);
 
 #[derive(Debug)]
 struct Flag {
     stopped: AtomicBool,
-    /// Wakes a blocked key read. `None` when the system gave none, and the
-    /// read then looks every [`Abort::TICK`].
+    /// Wakes a blocked key read; `None` when the system gave none, and the read
+    /// then looks every [`Abort::TICK`].
     wake: Option<wake::Wake>,
 }
 
@@ -119,7 +116,6 @@ impl Flag {
 
 impl Stop {
     /// Ends every question that carries the matching [`Abort`], now and later.
-    /// Calling it again does nothing.
     pub fn stop(&self) {
         self.0.raise();
     }

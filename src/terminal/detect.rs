@@ -74,7 +74,7 @@ impl ColorHint {
         )
     }
 
-    /// The hint for the given variable values. `clicolor_force` beats every
+    /// The hint for the given variable values; `clicolor_force` beats every
     /// refusal.
     #[must_use]
     pub fn from_vars(
