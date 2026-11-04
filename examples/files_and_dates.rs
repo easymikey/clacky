@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     ui.intro(" files and dates ")?;
 
     let Some(earliest) = Date::new(2026, 1, 1) else {
-        return ui.cancel("No such date", &[]);
+        return ui.cancel("No such date");
     };
     let config = ui.ask(
         path("Config file")
@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     let folder = ui.ask(path("Output folder").kind(PathKind::Directory))?;
     let day = ui.ask(date("Departure").order(DateOrder::Dmy).min(earliest))?;
 
-    ui.outro(&format!(
+    ui.outro(format_args!(
         "{} into {} on {day:?}",
         config.display(),
         folder.display()

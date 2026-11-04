@@ -980,7 +980,7 @@ mod tests {
             .await
             .err();
         assert!(matches!(err, Some(Error::Interrupted)), "{err:?}");
-        form.cancel("login cancelled", &[])?;
+        form.cancel("login cancelled")?;
         let shown = screen(&form.terminal().written());
         assert!(!shown.contains('◒'), "{shown}");
         assert!(shown.ends_with("└  login cancelled"), "{shown}");

@@ -35,7 +35,7 @@ fn main() -> Result<()> {
             .item('q', "quit", "Quit"),
     )?;
 
-    ui.outro(&format!(
+    ui.outro(format_args!(
         "{region}, {} tools, {} targets, then {next}",
         tools.len(),
         groups.len()

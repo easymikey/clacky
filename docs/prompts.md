@@ -49,7 +49,8 @@ assert_eq!(email.simulate(keys)?, "a@b");
 `.given(Option<T>)` skips a question whose answer came from the command line,
 and `.given_line(Option<&str>)` reads text from the environment as a typed
 line. `Defaults::Take` answers the rest with their defaults, and a question
-without one is `Error::NoDefault`.
+without one is `Error::NoDefault`. A `confirm` has one built in, Yes, so
+`--yes` answers Yes unless `.default(Reply::No)` says otherwise.
 
 ```no_run
 use clacky::prelude::*;
@@ -63,6 +64,6 @@ let port = ui.ask(text("Port").default("8080").parse::<u16>().given(port))?;
 let token = ui.ask(
     password("Token").given_line(std::env::var("APP_TOKEN").ok().as_deref()),
 )?;
-ui.outro(&format!("port {port}, {} bytes of token", token.len()))
+ui.outro(format_args!("port {port}, {} bytes of token", token.len()))
 # }
 ```

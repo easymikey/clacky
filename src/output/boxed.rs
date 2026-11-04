@@ -1,5 +1,7 @@
 //! A framed block of text on the rail.
 
+use std::fmt::Display;
+
 use crate::{
     core::{error::Result, session::Session},
     render::{
@@ -100,18 +102,14 @@ pub struct Boxed<'s, T: Terminal> {
 impl<T: Terminal> Session<T> {
     /// Starts a framed block with rounded corners, as in `note`. The title may
     /// be empty.
-    pub fn boxed(
-        &self,
-        title: impl Into<String>,
-        body: impl Into<String>,
-    ) -> Boxed<'_, T> {
+    pub fn boxed(&self, title: impl Display, body: impl Display) -> Boxed<'_, T> {
         // Clack's docs promise rounded corners and a plain width, but its code
         // draws square corners and reads a number as a fraction. We follow the
         // docs.
         Boxed {
             session: self,
-            title: title.into(),
-            body: body.into(),
+            title: title.to_string(),
+            body: body.to_string(),
             width: BoxWidth::Auto,
             title_align: Align::Left,
             content_align: Align::Left,

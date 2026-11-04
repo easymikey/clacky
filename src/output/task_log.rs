@@ -1,6 +1,6 @@
 //! `task_log`: the last lines of a noisy task, cleared when it succeeds.
 
-use std::num::NonZeroUsize;
+use std::{fmt::Display, num::NonZeroUsize};
 
 use unicode_width::UnicodeWidthChar as _;
 
@@ -128,10 +128,10 @@ pub struct TaskLog<'s, T: Terminal> {
 impl<T: Terminal> Session<T> {
     /// A task log under `title`.
     #[must_use]
-    pub fn task_log(&self, title: impl Into<String>) -> TaskLog<'_, T> {
+    pub fn task_log(&self, title: impl Display) -> TaskLog<'_, T> {
         TaskLog {
             session: self,
-            title: title.into(),
+            title: title.to_string(),
             limit: None,
             sections: vec![Section {
                 header: Header::Bare,
@@ -155,14 +155,14 @@ impl<'s, T: Terminal> TaskLog<'s, T> {
     /// Adds a line to the main log; a line break starts another line.
     /// # Errors
     /// The terminal failed.
-    pub fn message(&mut self, line: &str) -> Result<()> {
-        self.push(0, line)
+    pub fn message(&mut self, line: impl Display) -> Result<()> {
+        self.push(0, &line.to_string())
     }
 
     /// Opens a group: a name over lines of its own.
-    pub fn group(&mut self, name: impl Into<String>) -> TaskLogGroup<'_, 's, T> {
+    pub fn group(&mut self, name: impl Display) -> TaskLogGroup<'_, 's, T> {
         self.sections.push(Section {
-            header: Header::Running(name.into()),
+            header: Header::Running(name.to_string()),
             lines: Vec::new(),
         });
         TaskLogGroup {
@@ -174,7 +174,7 @@ impl<'s, T: Terminal> TaskLog<'s, T> {
     /// Clears the log and leaves a green `◇` line with `message`.
     /// # Errors
     /// The terminal failed.
-    pub fn success(self, message: &str) -> Result<()> {
+    pub fn success(self, message: impl Display) -> Result<()> {
         let skin = self.session.skin();
         let (theme, symbols) = (skin.theme(), skin.symbols());
         let line = format!(
@@ -188,7 +188,7 @@ impl<'s, T: Terminal> TaskLog<'s, T> {
     /// log.
     /// # Errors
     /// The terminal failed.
-    pub fn error(self, message: &str) -> Result<()> {
+    pub fn error(self, message: impl Display) -> Result<()> {
         let skin = self.session.skin();
         let (theme, symbols) = (skin.theme(), skin.symbols());
         let line = format!(
@@ -363,22 +363,22 @@ impl<T: Terminal> TaskLogGroup<'_, '_, T> {
     /// Adds a line to the group.
     /// # Errors
     /// The terminal failed.
-    pub fn message(&mut self, line: &str) -> Result<()> {
-        self.log.push(self.at, line)
+    pub fn message(&mut self, line: impl Display) -> Result<()> {
+        self.log.push(self.at, &line.to_string())
     }
 
     /// Marks the group done: its name gives way to a green `◆` and `message`.
     /// # Errors
     /// The terminal failed.
-    pub fn success(self, message: impl Into<String>) -> Result<()> {
-        self.close(Header::Succeeded(message.into()))
+    pub fn success(self, message: impl Display) -> Result<()> {
+        self.close(Header::Succeeded(message.to_string()))
     }
 
     /// Marks the group failed: its name gives way to a red `■` and `message`.
     /// # Errors
     /// The terminal failed.
-    pub fn error(self, message: impl Into<String>) -> Result<()> {
-        self.close(Header::Failed(message.into()))
+    pub fn error(self, message: impl Display) -> Result<()> {
+        self.close(Header::Failed(message.to_string()))
     }
 
     fn close(self, header: Header) -> Result<()> {
@@ -481,7 +481,7 @@ mod tests {
     fn ten_lines_stay_unless_told_otherwise() -> Result<()> {
         let session = session(TerminalKind::Live);
         let mut log = session.task_log("Building");
-        (1..=12).try_for_each(|n| log.message(&format!("line {n}")))?;
+        (1..=12).try_for_each(|n| log.message(format!("line {n}")))?;
         let shown = screen(&session.terminal().written());
         assert!(!shown.contains("line 2\n"), "{shown}");
         assert!(shown.ends_with("│  line 12"), "{shown}");
@@ -594,7 +594,7 @@ mod tests {
     fn long_lines_are_cut_to_the_width() -> Result<()> {
         let session = session(TerminalKind::Live);
         let mut log = session.task_log("Building");
-        log.message(&"x".repeat(200))?;
+        log.message("x".repeat(200))?;
         let shown = screen(&session.terminal().written());
         let widest = shown.lines().map(|line| line.chars().count()).max();
         assert!(widest.is_some_and(|widest| widest <= 80), "{shown}");
@@ -669,7 +669,7 @@ mod tests {
     fn rows_are_erased_at_the_width_the_terminal_has_now() -> Result<()> {
         let session = session(TerminalKind::Live);
         let mut log = session.task_log("Building");
-        log.message(&"x".repeat(70))?;
+        log.message("x".repeat(70))?;
         session.terminal().resize(40);
         log.message("two")?;
         let raw = session.terminal().written();
@@ -681,10 +681,10 @@ mod tests {
     fn the_whole_block_stays_within_the_limit_with_groups() -> Result<()> {
         let session = session(TerminalKind::Live);
         let mut log = session.task_log("Building").limit(last(4));
-        (1..=3).try_for_each(|n| log.message(&format!("main {n}")))?;
+        (1..=3).try_for_each(|n| log.message(format!("main {n}")))?;
         for name in ["a", "b"] {
             let mut group = log.group(name);
-            (1..=3).try_for_each(|n| group.message(&format!("{name} {n}")))?;
+            (1..=3).try_for_each(|n| group.message(format!("{name} {n}")))?;
         }
         let shown = screen(&session.terminal().written());
         assert_eq!(shown.lines().count(), 2 + 2 + 4, "{shown}");
@@ -699,7 +699,7 @@ mod tests {
     fn a_long_accessible_log_writes_each_row_once() -> Result<()> {
         let session = session(TerminalKind::Live).output(OutputMode::Accessible);
         let mut log = session.task_log("Building");
-        (0..2000).try_for_each(|n| log.message(&format!("line {n}")))?;
+        (0..2000).try_for_each(|n| log.message(format!("line {n}")))?;
         let raw = session.terminal().written();
         assert_eq!(raw.lines().count(), 2 + 2000);
         Ok(())

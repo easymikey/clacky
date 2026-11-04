@@ -31,6 +31,6 @@ async fn main() -> Result<()> {
         .await?;
     match outcome {
         Ok(()) => ui.outro("Welcome back"),
-        Err(refused) => ui.cancel("Could not sign in", &[refused]),
+        Err(refused) => ui.cancel_with("Could not sign in", [refused]),
     }
 }

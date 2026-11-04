@@ -27,9 +27,9 @@ fn main() -> Result<()> {
     let token = ui.ask(
         password("Token").given_line(std::env::var("APP_TOKEN").ok().as_deref()),
     )?;
-    let create = ui.ask(confirm("Create it?").default(Reply::Yes))?;
+    let create = ui.ask(confirm("Create it?"))?;
 
-    ui.outro(&format!(
+    ui.outro(format_args!(
         "{name}: {} bytes of token, create: {create}",
         token.len()
     ))

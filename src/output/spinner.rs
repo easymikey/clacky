@@ -1,6 +1,9 @@
 //! The `spinner`: a turning frame and a message for work that takes a while.
 
-use std::time::{Duration, Instant};
+use std::{
+    fmt::Display,
+    time::{Duration, Instant},
+};
 
 use crate::{
     core::{
@@ -232,7 +235,7 @@ impl<'s, T: Terminal> Spinner<'s, T> {
     ///
     /// # Errors
     /// The terminal failed, or Ctrl-C came.
-    pub fn start(&mut self, message: impl Into<String>) -> Result<()> {
+    pub fn start(&mut self, message: impl Display) -> Result<()> {
         match self.phase {
             Phase::Ready => {}
             Phase::Running(_) | Phase::Finished => return Ok(()),
@@ -243,7 +246,7 @@ impl<'s, T: Terminal> Spinner<'s, T> {
         }
         let look = self.look();
         let mut running = Running {
-            message: message.into(),
+            message: message.to_string(),
             frame: 0,
             started: Instant::now(),
             rows: Vec::new(),
@@ -267,13 +270,13 @@ impl<'s, T: Terminal> Spinner<'s, T> {
     /// Changes the message and draws it.
     /// # Errors
     /// The terminal failed, or Ctrl-C came.
-    pub fn message(&mut self, message: impl Into<String>) -> Result<()> {
+    pub fn message(&mut self, message: impl Display) -> Result<()> {
         self.check_interrupt()?;
         let look = self.look();
         let session = self.session;
         match &mut self.phase {
             Phase::Running(running) => {
-                running.message = message.into();
+                running.message = message.to_string();
                 Self::show(session, look, running)
             }
             Phase::Ready | Phase::Finished => Ok(()),
@@ -304,23 +307,23 @@ impl<'s, T: Terminal> Spinner<'s, T> {
     /// Ends with a green `◇` line.
     /// # Errors
     /// The terminal failed, or Ctrl-C came before the end.
-    pub fn stop(&mut self, message: impl Into<String>) -> Result<()> {
+    pub fn stop(&mut self, message: impl Display) -> Result<()> {
         self.check_interrupt()?;
-        self.end(Ending::Stop, &message.into())
+        self.end(Ending::Stop, &message.to_string())
     }
 
     /// Ends with a red `■` line.
     /// # Errors
     /// The terminal failed.
-    pub fn cancel(&mut self, message: impl Into<String>) -> Result<()> {
-        self.end(Ending::Cancel, &message.into())
+    pub fn cancel(&mut self, message: impl Display) -> Result<()> {
+        self.end(Ending::Cancel, &message.to_string())
     }
 
     /// Ends with a red `▲` line.
     /// # Errors
     /// The terminal failed.
-    pub fn error(&mut self, message: impl Into<String>) -> Result<()> {
-        self.end(Ending::Error, &message.into())
+    pub fn error(&mut self, message: impl Display) -> Result<()> {
+        self.end(Ending::Error, &message.to_string())
     }
 
     /// Ticks every [`DELAY`] until `work` is done; the spinner goes on running,

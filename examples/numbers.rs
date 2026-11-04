@@ -26,5 +26,7 @@ fn main() -> Result<()> {
     let address =
         ui.ask(text("Address").placeholder("127.0.0.1").parse::<Ipv4Addr>())?;
 
-    ui.outro(&format!("{address}:{port}, {workers} workers at {ratio}"))
+    ui.outro(format_args!(
+        "{address}:{port}, {workers} workers at {ratio}"
+    ))
 }

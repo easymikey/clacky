@@ -9,8 +9,8 @@ fn main() -> Result<()> {
     ui.intro(" abort ")?;
 
     match ui.ask(text("Name").timeout(Duration::from_secs(10))) {
-        Err(Error::Aborted) => return ui.cancel("Too slow", &[]),
-        other => ui.log(clacky::Tone::Info, &format!("Hello, {}", other?))?,
+        Err(Error::Aborted) => return ui.cancel("Too slow"),
+        other => ui.log(clacky::Tone::Info, format_args!("Hello, {}", other?))?,
     }
 
     let (abort, stop) = Abort::new();
@@ -19,7 +19,7 @@ fn main() -> Result<()> {
         stop.stop();
     });
     match ui.ask(confirm("Still there?").abort(&abort)) {
-        Err(Error::Aborted) => ui.cancel("The watchdog ended the question", &[]),
-        answer => ui.outro(&format!("Answered: {}", answer?)),
+        Err(Error::Aborted) => ui.cancel("The watchdog ended the question"),
+        answer => ui.outro(format_args!("Answered: {}", answer?)),
     }
 }

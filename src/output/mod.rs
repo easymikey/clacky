@@ -10,6 +10,8 @@ pub mod stream;
 pub mod task_log;
 pub mod tasks;
 
+use std::fmt::Display;
+
 use crate::{
     core::{error::Result, session::Session},
     render::draw::{self, Tone},
@@ -42,11 +44,11 @@ pub struct LogEntry<'s, T: Terminal> {
 impl<T: Terminal> Session<T> {
     /// Starts a log entry; the message may span lines, the rest sit on the
     /// rail.
-    pub fn log_entry(&self, tone: Tone, message: impl Into<String>) -> LogEntry<'_, T> {
+    pub fn log_entry(&self, tone: Tone, message: impl Display) -> LogEntry<'_, T> {
         LogEntry {
             session: self,
             tone,
-            message: message.into(),
+            message: message.to_string(),
             symbol: None,
             spacing: 1,
         }
@@ -56,9 +58,9 @@ impl<T: Terminal> Session<T> {
 impl<T: Terminal> LogEntry<'_, T> {
     /// Replaces the tone's symbol; shown as given, so paint it first if needed.
     #[must_use]
-    pub fn symbol(self, symbol: impl Into<String>) -> Self {
+    pub fn symbol(self, symbol: impl Display) -> Self {
         Self {
-            symbol: Some(symbol.into()),
+            symbol: Some(symbol.to_string()),
             ..self
         }
     }

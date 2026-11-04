@@ -1,5 +1,7 @@
 //! Text that arrives in pieces, drawn on the rail as it comes.
 
+use std::fmt::Display;
+
 use unicode_segmentation::UnicodeSegmentation as _;
 
 use crate::{
@@ -202,8 +204,8 @@ impl<T: Terminal> LogStream<'_, T> {
     /// Draws a chunk; it may end in the middle of a row or of a word.
     /// # Errors
     /// The terminal failed.
-    pub fn write(&mut self, chunk: &str) -> Result<()> {
-        let text = self.flow.feed(chunk);
+    pub fn write(&mut self, chunk: impl Display) -> Result<()> {
+        let text = self.flow.feed(&chunk.to_string());
         let ready = self.ready(text);
         self.session.write(&ready)
     }
@@ -232,13 +234,11 @@ impl<T: Terminal> LogStream<'_, T> {
     /// Writes every chunk of `chunks`, then finishes.
     /// # Errors
     /// The terminal failed.
-    pub fn pipe<S: AsRef<str>>(
+    pub fn pipe<S: Display>(
         mut self,
         chunks: impl IntoIterator<Item = S>,
     ) -> Result<()> {
-        chunks
-            .into_iter()
-            .try_for_each(|chunk| self.write(chunk.as_ref()))?;
+        chunks.into_iter().try_for_each(|chunk| self.write(chunk))?;
         self.finish()
     }
 }

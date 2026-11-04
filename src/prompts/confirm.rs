@@ -1,13 +1,17 @@
 //! The yes or no question.
 
+use std::{cell::Cell, fmt::Display};
+
 use crate::{
     core::{
-        ask::{Frame, Key, Next, Peek, Phase, Prefill, Prompt},
-        error::Result,
+        ask::{Ask, Frame, Key, Next, Peek, Phase, Prefill, Prompt},
+        error::{Error, Result},
         keys::Printable,
+        session::Session,
     },
     prompts::choice::{radio_row, rail},
     render::messages::{Messages, Refusal},
+    terminal::Terminal,
     values::line::Cancellation,
 };
 
@@ -32,7 +36,8 @@ impl Reply {
     }
 }
 
-/// Asks yes or no; Enter takes Yes unless told otherwise.
+/// Asks yes or no; Enter takes Yes unless told otherwise, and so does
+/// `Defaults::Take`.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -46,11 +51,13 @@ impl Reply {
 /// # Ok(())
 /// # }
 /// ```
+///
+/// A No that should end the form is [`or_cancel`](Confirm::or_cancel).
 #[must_use]
 pub fn confirm(message: impl Into<String>) -> Confirm {
     Confirm {
         message: message.into(),
-        default: None,
+        default: Reply::Yes,
         yes: None,
         no: None,
         layout: Layout::Inline,
@@ -67,19 +74,40 @@ enum Layout {
 #[derive(Debug)]
 pub struct Confirm {
     message: String,
-    default: Option<Reply>,
+    default: Reply,
     yes: Option<String>,
     no: Option<String>,
     layout: Layout,
 }
 
 impl Confirm {
-    /// The answer Enter takes; Yes by default.
+    /// The answer Enter takes, and `Defaults::Take`; Yes by default.
     #[must_use]
     pub fn default(self, reply: Reply) -> Self {
         Self {
-            default: Some(reply),
+            default: reply,
             ..self
+        }
+    }
+
+    /// Ends the form on No: the question is shown cancelled, then `message` as
+    /// [`Session::cancel`] shows it, and the answer is
+    /// [`Error::Cancelled`]. Yes gives `()`, so the code after it is the yes
+    /// branch.
+    ///
+    /// ```no_run
+    /// use clacky::prelude::*;
+    /// # fn main() -> clacky::core::error::Result<()> {
+    /// let ui = Session::detect()?;
+    /// ui.ask(confirm("Create it?").or_cancel("Nothing created"))?;
+    /// ui.outro("Created")
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn or_cancel(self, message: impl Display) -> OrCancel {
+        OrCancel {
+            confirm: self,
+            message: message.to_string(),
         }
     }
 
@@ -153,7 +181,7 @@ impl Prompt for Confirm {
     }
 
     fn start(&self) -> Result<bool> {
-        Ok(self.default.is_none_or(Reply::is_yes))
+        Ok(self.default.is_yes())
     }
 
     /// Label initials win over the key map by becoming `Y` and `N`, which no
@@ -235,7 +263,7 @@ impl Prompt for Confirm {
     }
 
     fn by_default(&self) -> Option<bool> {
-        self.default.map(Reply::is_yes)
+        Some(self.default.is_yes())
     }
 
     fn printable(&self) -> Printable {
@@ -253,6 +281,94 @@ impl Prompt for Confirm {
     fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
         (!line.trim().is_empty() && self.answer(line, messages).is_none())
             .then_some(Refusal::NoOption)
+    }
+}
+
+/// A [`Confirm`] whose No ends the form; build it with [`Confirm::or_cancel`].
+#[derive(Debug)]
+pub struct OrCancel {
+    confirm: Confirm,
+    message: String,
+}
+
+impl Ask for OrCancel {
+    type Output = ();
+
+    fn run<T: Terminal>(self, session: &Session<T>) -> Result<()> {
+        let declined = Cell::new(false);
+        let question = Declining {
+            confirm: self.confirm,
+            declined: &declined,
+        };
+        match session.drive(question) {
+            Ok(_) => Ok(()),
+            Err(Error::Cancelled) if declined.get() => {
+                session.cancel(&self.message)?;
+                Err(Error::Cancelled)
+            }
+            Err(error) => Err(error),
+        }
+    }
+}
+
+/// The question of an [`OrCancel`]: a No quits, and says so in `declined`, so
+/// Esc stays apart from it.
+struct Declining<'a> {
+    confirm: Confirm,
+    declined: &'a Cell<bool>,
+}
+
+impl Prompt for Declining<'_> {
+    type Output = bool;
+    type State = bool;
+
+    fn message(&self) -> &str {
+        self.confirm.message()
+    }
+
+    fn start(&self) -> Result<bool> {
+        self.confirm.start()
+    }
+
+    fn spelled(&self, key: Key, messages: &Messages) -> Key {
+        self.confirm.spelled(key, messages)
+    }
+
+    fn update(&self, yes: bool, key: Key) -> Next<bool> {
+        match self.confirm.update(yes, key) {
+            Next::Submit(false) => {
+                self.declined.set(true);
+                Next::Quit(false, Cancellation::Cancel)
+            }
+            next @ (Next::Editing(_)
+            | Next::Refuse(..)
+            | Next::Submit(true)
+            | Next::Quit(..)) => next,
+        }
+    }
+
+    fn view(&self, yes: &bool, phase: Phase<'_>, frame: &mut Frame) {
+        self.confirm.view(yes, phase, frame);
+    }
+
+    fn finish(self, yes: bool) -> Result<bool> {
+        self.confirm.finish(yes)
+    }
+
+    fn by_default(&self) -> Option<bool> {
+        self.confirm.by_default()
+    }
+
+    fn printable(&self) -> Printable {
+        self.confirm.printable()
+    }
+
+    fn typed(&self, line: &str, messages: &Messages) -> Vec<Key> {
+        self.confirm.typed(line, messages)
+    }
+
+    fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
+        self.confirm.misread(line, messages)
     }
 }
 
@@ -281,6 +397,7 @@ mod tests {
         core::{
             ask::{Frame, Key, Phase, Prompt},
             error::{Error, Result},
+            settings::Defaults,
         },
         fake::{Script, screen, testing::bare},
         render::{color::ColorChoice, messages::Messages},
@@ -549,5 +666,74 @@ mod tests {
     fn piped_input_is_no_input() {
         let ui = bare(Script::new(TerminalKind::Redirected, [], ["y"]));
         assert!(matches!(ui.ask(confirm("Go?")), Err(Error::NoInput)));
+    }
+
+    #[rstest]
+    #[case::built_in_default_is_yes(confirm("Go?"), true)]
+    #[case::yes_stated(confirm("Go?").default(Reply::Yes), true)]
+    #[case::no_changes_it(confirm("Go?").default(Reply::No), false)]
+    fn take_answers_with_the_default(
+        #[case] prompt: Confirm,
+        #[case] expected: bool,
+    ) -> Result<()> {
+        let ui = bare(Script::new(TerminalKind::Live, [], [])).defaults(Defaults::Take);
+        assert_eq!(ui.ask(prompt)?, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn no_ends_the_form_with_the_cancelled_question_and_the_line() {
+        let ui = bare(Script::new(TerminalKind::Live, [Key::Char('n')], []));
+        let result = ui.ask(confirm("Go?").or_cancel("Nothing created"));
+        assert!(matches!(result, Err(Error::Cancelled)), "{result:?}");
+        let shown = screen(&ui.terminal().written());
+        assert!(
+            shown.ends_with("■  Go?\n│  No\n│\n└  Nothing created"),
+            "{shown}"
+        );
+    }
+
+    #[rstest]
+    #[case::enter(Key::Enter)]
+    #[case::y(Key::Char('y'))]
+    fn yes_goes_on_without_a_line(#[case] key: Key) -> Result<()> {
+        let ui = bare(Script::new(TerminalKind::Live, [key], []));
+        ui.ask(confirm("Go?").or_cancel("Nothing created"))?;
+        let shown = screen(&ui.terminal().written());
+        assert!(shown.ends_with("◇  Go?\n│  Yes\n│"), "{shown}");
+        Ok(())
+    }
+
+    #[test]
+    fn escape_cancels_without_the_line() {
+        let ui = bare(Script::new(TerminalKind::Live, [Key::Cancel], []));
+        let result = ui.ask(confirm("Go?").or_cancel("Nothing created"));
+        assert!(matches!(result, Err(Error::Cancelled)), "{result:?}");
+        let shown = screen(&ui.terminal().written());
+        assert!(!shown.contains("Nothing created"), "{shown}");
+    }
+
+    #[test]
+    fn a_typed_no_ends_the_form_too() {
+        let ui = bare(Script::new(TerminalKind::Dumb, [], ["n"]));
+        let result = ui.ask(confirm("Go?").or_cancel("Nothing created"));
+        assert!(matches!(result, Err(Error::Cancelled)), "{result:?}");
+        let shown = screen(&ui.terminal().written());
+        assert!(shown.ends_with("└  Nothing created"), "{shown}");
+    }
+
+    #[rstest]
+    #[case::yes(Reply::Yes, true)]
+    #[case::no(Reply::No, false)]
+    fn take_continues_on_yes_and_cancels_on_no(
+        #[case] default: Reply,
+        #[case] goes_on: bool,
+    ) {
+        let ui = bare(Script::new(TerminalKind::Live, [], [])).defaults(Defaults::Take);
+        let result =
+            ui.ask(confirm("Go?").default(default).or_cancel("Nothing created"));
+        assert_eq!(result.is_ok(), goes_on, "{result:?}");
+        let shown = screen(&ui.terminal().written());
+        assert_eq!(shown.contains("└  Nothing created"), !goes_on, "{shown}");
     }
 }

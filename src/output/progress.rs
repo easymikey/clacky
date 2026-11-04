@@ -1,5 +1,7 @@
 //! The `progress` bar: a spinner whose message starts with a bar.
 
+use std::fmt::Display;
+
 use crate::{
     core::{error::Result, session::Session, settings::OutputMode},
     output::spinner::Spinner,
@@ -81,17 +83,17 @@ impl<T: Terminal> Progress<'_, T> {
     /// Draws the bar at its start with `message` after it.
     /// # Errors
     /// The terminal failed, or Ctrl-C came.
-    pub fn start(&mut self, message: impl Into<String>) -> Result<()> {
-        self.message = message.into();
+    pub fn start(&mut self, message: impl Display) -> Result<()> {
+        self.message = message.to_string();
         self.spinner.start(self.line())
     }
 
     /// Moves the bar `step` forward, at most to its end, and shows `message`.
     /// # Errors
     /// The terminal failed, or Ctrl-C came.
-    pub fn advance(&mut self, step: u32, message: impl Into<String>) -> Result<()> {
+    pub fn advance(&mut self, step: u32, message: impl Display) -> Result<()> {
         self.value = self.value.saturating_add(step).min(self.max);
-        self.message = message.into();
+        self.message = message.to_string();
         self.spinner.message(self.line())
     }
 
@@ -106,21 +108,21 @@ impl<T: Terminal> Progress<'_, T> {
     /// Ends with the spinner's green `◇` line and `message`.
     /// # Errors
     /// The terminal failed, or Ctrl-C came before the end.
-    pub fn stop(&mut self, message: impl Into<String>) -> Result<()> {
+    pub fn stop(&mut self, message: impl Display) -> Result<()> {
         self.spinner.stop(message)
     }
 
     /// Ends with a red `■` line.
     /// # Errors
     /// The terminal failed.
-    pub fn cancel(&mut self, message: impl Into<String>) -> Result<()> {
+    pub fn cancel(&mut self, message: impl Display) -> Result<()> {
         self.spinner.cancel(message)
     }
 
     /// Ends with a red `▲` line.
     /// # Errors
     /// The terminal failed.
-    pub fn error(&mut self, message: impl Into<String>) -> Result<()> {
+    pub fn error(&mut self, message: impl Display) -> Result<()> {
         self.spinner.error(message)
     }
 

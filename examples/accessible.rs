@@ -16,5 +16,5 @@ fn main() -> Result<()> {
     spinner.start("Creating")?;
     spinner.stop("Created")?;
 
-    ui.outro(&format!("{kind}: {ok}"))
+    ui.outro(format_args!("{kind}: {ok}"))
 }

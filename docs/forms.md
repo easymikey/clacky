@@ -30,7 +30,7 @@ struct Setup {
 fn main() -> Result<()> {
     let ui = Session::detect()?;
     let setup = ui.ask(Setup::form().port(Some(3000)))?;
-    ui.outro(&format!("{setup:?}"))
+    ui.outro(format_args!("{setup:?}"))
 }
 ```
 

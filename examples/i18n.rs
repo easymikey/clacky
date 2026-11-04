@@ -24,5 +24,5 @@ fn main() -> Result<()> {
             .hint("frisch"),
     )?;
     let more = ui.ask(confirm("Noch eine Kugel?"))?;
-    ui.outro(&format!("{flavor}, mehr: {more}"))
+    ui.outro(format_args!("{flavor}, mehr: {more}"))
 }

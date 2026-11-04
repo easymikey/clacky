@@ -56,13 +56,15 @@ fn main() -> Result<()> {
     let kind = ui.ask(select("Kind").item("lib", "Library").item("bin", "Binary"))?;
     let port: u16 = ui.ask(number("Port").min(1).max(65535).default(8080))?;
 
-    if ui.ask(confirm("Create it?").default(Reply::Yes))? {
-        ui.outro(&format!("{name}: {kind} on {port}"))
+    if ui.ask(confirm("Create it?"))? {
+        ui.outro(format!("{name}: {kind} on {port}"))
     } else {
-        ui.cancel("Nothing created", &[])
+        ui.cancel("Nothing created")
     }
 }
 ```
+
+The same, with a No that ends the form: `ui.ask(confirm("Create it?").or_cancel("Nothing created"))?;`. Text arguments of `intro`, `outro`, `cancel`, `log` and the spinner take anything that is `Display`, so `format_args!(..)` works too.
 
 `Session::detect` reads the environment once. Esc and Ctrl-C come back as errors. The [guide](https://docs.rs/clacky/latest/clacky/guide/index.html) has a page per topic.
 

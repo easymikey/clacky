@@ -53,7 +53,7 @@ fn main() -> Result<()> {
 
     ui.intro(" derive ")?;
     let setup = ui.ask(Setup::form().name(args.name).kind(args.kind))?;
-    ui.outro(&format!(
+    ui.outro(format_args!(
         "{} on port {}, {:?}",
         setup.name, setup.port, setup.kind
     ))

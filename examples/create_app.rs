@@ -34,7 +34,7 @@ fn main() -> Result<()> {
         ))
         .cancel_as_none()?;
     let Some((path, kind, tools, install)) = asked else {
-        return ui.cancel("Operation cancelled", &[]);
+        return ui.cancel("Operation cancelled");
     };
 
     if install {
@@ -67,7 +67,7 @@ fn main() -> Result<()> {
     ui.note("Next steps.", &lines)?;
     ui.log(
         clacky::Tone::Info,
-        &format!("{kind} with {} tools", tools.len()),
+        format_args!("{kind} with {} tools", tools.len()),
     )?;
     sleep(Duration::from_millis(200));
     ui.outro("Problems? https://example.com/issues")

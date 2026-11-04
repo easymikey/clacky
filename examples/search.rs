@@ -36,5 +36,5 @@ fn main() -> Result<()> {
     });
     let command = ui.ask(autocomplete("Command").source(prefixes))?;
 
-    ui.outro(&format!("{one}, {} more, then {command}", many.len()))
+    ui.outro(format_args!("{one}, {} more, then {command}", many.len()))
 }

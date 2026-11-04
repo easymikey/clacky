@@ -11,7 +11,7 @@
 //!     ui.intro(" my-app ")?;
 //!     let name = ui.ask(text("Project name").default("my-app"))?;
 //!     let port: u16 = ui.ask(number("Port").min(1).max(65535).default(8080))?;
-//!     ui.outro(&format!("{name} on {port}"))
+//!     ui.outro(format!("{name} on {port}"))
 //! }
 //! ```
 //!
