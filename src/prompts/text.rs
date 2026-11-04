@@ -15,7 +15,8 @@ use crate::{
     values::line::{Cancellation, CharFilter, TypedAnswer},
 };
 
-/// A line of text.
+/// A line of text, trimmed of surrounding whitespace before `validate`, `parse`
+/// and the answer see it; a default is returned as given.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -365,6 +366,39 @@ mod tests {
         color: ColorChoice,
     ) -> Vec<String> {
         testing::rendered(prompt, keys, Phase::Active, color, 40)
+    }
+
+    #[rstest]
+    #[case::live(TerminalKind::Live, vec![Key::Char(' '), Key::Char('a'), Key::Char(' '), Key::Enter], vec![])]
+    #[case::dumb(TerminalKind::Dumb, vec![], vec!["  a  "])]
+    #[case::piped(TerminalKind::Redirected, vec![], vec!["  a  "])]
+    fn validate_and_the_answer_see_the_same_trimmed_text(
+        #[case] kind: TerminalKind,
+        #[case] keys: Vec<Key>,
+        #[case] lines: Vec<&'static str>,
+    ) -> Result<()> {
+        let seen = RefCell::new(Vec::new());
+        let ui = bare(Script::new(kind, keys, lines));
+        let answer = ui.ask(text("Q").validate(|text: &str| {
+            seen.borrow_mut().push(text.to_owned());
+            Ok::<(), String>(())
+        }))?;
+        assert_eq!(answer, "a");
+        assert_eq!(*seen.borrow(), ["a"]);
+        Ok(())
+    }
+
+    #[test]
+    fn a_default_is_what_validate_and_the_answer_both_see() -> Result<()> {
+        let seen = RefCell::new(Vec::new());
+        let ui = live([Key::Enter]);
+        let answer = ui.ask(text("Q").default("  Ada ").validate(|text: &str| {
+            seen.borrow_mut().push(text.to_owned());
+            Ok::<(), String>(())
+        }))?;
+        assert_eq!(answer, "  Ada ");
+        assert_eq!(*seen.borrow(), ["  Ada "]);
+        Ok(())
     }
 
     #[test]

@@ -27,7 +27,7 @@ pub enum OnError {
     Clear,
 }
 
-/// A secret; the answer is wiped from memory when dropped.
+/// A secret, never trimmed; the answer is wiped from memory when dropped.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -378,6 +378,21 @@ mod tests {
         let err = bare(script).ask(password("Code")).err();
         let said = err.as_ref().map(ToString::to_string).unwrap_or_default();
         assert!(said.starts_with("could not hide the input"), "{err:?}");
+    }
+
+    #[test]
+    fn a_secret_keeps_its_spaces_for_validate_and_the_answer() {
+        let seen = RefCell::new(Vec::new());
+        let secret = password("Pass").validate(|text: &str| {
+            seen.borrow_mut().push(text.to_owned());
+            Ok::<(), String>(())
+        });
+        let keys = [Key::Char(' '), Key::Char('a'), Key::Char(' '), Key::Enter];
+        assert_eq!(
+            secret.simulate(keys).ok().as_deref().map(String::as_str),
+            Some(" a ")
+        );
+        assert_eq!(*seen.borrow(), [" a "]);
     }
 
     #[test]
