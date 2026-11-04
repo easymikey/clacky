@@ -14,7 +14,7 @@ runs:
         rustup toolchain install "$(sed -n 's/^msrv := "\(.*\)"/\1/p' justfile)" --profile minimal
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends libclang-dev
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: |
           ~/.cargo/registry
