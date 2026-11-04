@@ -22,7 +22,7 @@ jobs:
         include:
           - os: ubuntu-latest
             recipes: default
-          - os: macos-latest
+          - os: macos-15-intel
             recipes: clippy clippy-no-default check examples
           - os: windows-latest
             recipes: clippy clippy-no-default check examples
