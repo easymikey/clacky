@@ -1,5 +1,15 @@
 # clacky
 
+```text
+ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+ ⠀⠀⠀⠀⣀⣀⡀⠀⠀⠀⣿⡇⠀⠀⠀⣀⣀⣀⡀⠀⠀⠀⠀⢀⣀⣀⠀⠀⠀⢸⣿⡇⠀⠀⣀⠀⢀⣀⠀⠀⠀⢀⡀
+ ⠀⠀⣴⣿⠛⠛⢿⣷⠀⠀⣿⡇⠀⢰⡿⠟⠛⠻⣿⡆⠀⢠⣾⡟⠛⠻⣿⡆⠀⢸⣿⣇⣴⣿⠟⠀⠸⣿⡆⠀⢀⣾⡟    Clack-style terminal prompts for Rust.
+ ⠀⢸⣿⡇⠀⠀⠀⣀⠀⠀⣿⡇⠀⣠⣴⠶⠖⠛⣿⡇⠀⣿⣿⠀⠀⠀⢀⡀⠀⢸⣿⡿⠻⣷⡄⠀⠀⢹⣿⡀⣼⡿⠀
+ ⠀⠀⢻⣷⣦⣤⣾⡿⠃⠀⣿⡇⠀⢿⣿⣤⣤⡾⢿⣧⠀⠘⣿⣶⣤⣴⣿⠟⠀⢸⣿⡇⠀⠹⣿⡆⠀⠀⢻⣿⣿⠁⠀    cargo add clacky
+ ⠀⠀⠀⠈⠉⠉⠁⠀⠀⠀⠉⠁⠀⠀⠉⠉⠁⠀⠈⠁⠀⠀⠀⠉⠉⠉⠀⠀⠀⠀⠉⠀⠀⠀⠈⠁⢀⣀⣼⣿⠃⠀⠀    cargo add clacky --features derive
+ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠛⠁⠀⠀⠀
+```
+
 Clack-style prompts for Rust: one question at a time on a rail, answers as typed values, and a form you can test without a terminal. It is a port of [@clack/prompts](https://github.com/bombshell-dev/clack) with its look and keys.
 
 ```text
@@ -16,10 +26,7 @@ Clack-style prompts for Rust: one question at a time on a rail, answers as typed
 
 ## Why
 
-clacky is inspired by [clack](https://github.com/bombshell-dev/clack) 🍦: the prettiest terminal prompts I know, and I wanted them in Rust.
-[cliclack](https://github.com/fadeevab/cliclack) ports the look but keeps the theme in a global, so you can't change colors per session or test your prompts.
-clacky keeps clack's look and makes everything a value: the prompts, the theme, the texts.
-It pulls in 4 crates where cliclack pulls in 41.
+clacky is inspired by [clack](https://github.com/bombshell-dev/clack) 🍦: the prettiest terminal prompts I know, and I wanted them in Rust. [cliclack](https://github.com/fadeevab/cliclack) ports the look but keeps the theme in a global, so you can't change colors per session or test your prompts. clacky keeps clack's look and makes everything a value: the prompts, the theme, the texts. It pulls in 4 crates where cliclack pulls in 41.
 
 ## Features
 
@@ -74,7 +81,7 @@ Run one with `cargo run --example <name>` (`derive` needs `--features derive`): 
 
 ## Contributing
 
-`just` runs every check.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
