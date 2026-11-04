@@ -42,8 +42,7 @@ impl Drop for Quieted {
 }
 
 #[derive(Debug)]
-/// A scripted terminal. It plays back the keys and lines it is given and
-/// records everything written.
+/// A scripted terminal.
 pub struct Script {
     kind: TerminalKind,
     width: Cell<Option<usize>>,
@@ -79,8 +78,9 @@ enum CtrlC {
 
 impl Script {
     /// A terminal of `kind` that plays back `strokes` as keys and `lines` as
-    /// stdin lines. Its width is 80 columns. With no input left, a read fails
-    /// with [`io::ErrorKind::UnexpectedEof`] (keys) or ends the input (lines).
+    /// stdin lines. Its width is 80 columns, and with no input left a read
+    /// fails with [`io::ErrorKind::UnexpectedEof`] (keys) or ends the input
+    /// (lines).
     #[must_use]
     pub fn new(
         kind: TerminalKind,
@@ -127,10 +127,10 @@ impl Script {
         }
     }
 
-    /// Calls the stop of the question when the `key`th key (counting from 1)
-    /// is awaited, as if another thread had done it while the person was idle.
-    /// The question ends with [`Error::Aborted`](crate::Error::Aborted) and
-    /// that key is not taken. A question without an abort is not affected.
+    /// Calls the stop of the question when the `key`th key (counting from 1) is
+    /// awaited, as if another thread had done it while the person was idle. The
+    /// question ends with [`Error::Aborted`](crate::Error::Aborted) and that
+    /// key is not taken; a question without an abort is not affected.
     #[must_use]
     pub fn stopped_at_key(self, key: usize) -> Self {
         Self {
@@ -142,7 +142,7 @@ impl Script {
     /// Calls the stop of the question when the `line`th line (counting from 1)
     /// is awaited, as if another thread had done it while nothing was typed.
     /// The question ends with [`Error::Aborted`](crate::Error::Aborted) and
-    /// that line is not taken. A question without an abort is not affected.
+    /// that line is not taken; a question without an abort is not affected.
     #[must_use]
     pub fn stopped_at_line(self, line: usize) -> Self {
         Self {
@@ -489,9 +489,9 @@ pub(crate) mod testing {
         Session::new(script, Settings::new(ColorChoice::Plain))
     }
 
-    /// Turns a string into keys. `\n` Enter, `↑` `↓` `←` `→` arrows, `⇥` Tab,
-    /// `⌫` Backspace, `⇤` Home, `⇲` End, `⇞` Ctrl-U, `⇟` Ctrl-K, `⌁` Ctrl-D,
-    /// `␛` Esc, `☠` Ctrl-C; anything else types itself.
+    /// Turns a string into keys: `\n` Enter, `↑↓←→` arrows, `⇥` Tab, `⌫`
+    /// Backspace, `⇤` Home, `⇲` End, `⇞` Ctrl-U, `⇟` Ctrl-K, `⌁` Ctrl-D, `␛`
+    /// Esc, `☠` Ctrl-C.
     pub(crate) fn keys(spec: &str) -> Vec<Key> {
         spec.chars()
             .map(|c| match c {

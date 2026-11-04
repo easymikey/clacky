@@ -3,6 +3,7 @@
 pub mod autocomplete;
 mod caret;
 pub mod choice;
+#[cfg(doctest)] mod compile_fail;
 pub mod confirm;
 pub mod date;
 pub mod group_multiselect;

@@ -27,9 +27,7 @@ use crate::{
     values::line::Cancellation,
 };
 
-/// Starts a question with one answer. It has no options yet, so it is no
-/// prompt: add them with [`item`](EmptySelect::item) or
-/// [`items`](EmptySelect::items), which give a [`Select`].
+/// Starts a question with one answer.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -43,19 +41,6 @@ use crate::{
 /// )?;
 /// # Ok(())
 /// # }
-/// ```
-///
-/// A question without options does not compile, and `.hint` needs an option
-/// to apply to:
-///
-/// ```compile_fail
-/// use clacky::prelude::*;
-/// let _ = select("Kind").hint("recommended");
-/// ```
-///
-/// ```compile_fail
-/// use clacky::prelude::*;
-/// let _ = select("Kind").simulate([Key::Enter]);
 /// ```
 #[must_use]
 pub fn select(message: impl Into<String>) -> EmptySelect {
@@ -182,8 +167,8 @@ impl<V, S> Select<V, S> {
         }
     }
 
-    /// The option the cursor starts on, counted from 0; the last one when
-    /// that is past the end, and the next one that is not disabled when it is.
+    /// The option the cursor starts on, counted from 0; the last one when that
+    /// is past the end, and the next one that is not disabled when it is.
     #[must_use]
     pub fn default_at(self, index: usize) -> Self {
         Self {

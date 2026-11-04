@@ -29,9 +29,8 @@ impl Case {
     }
 }
 
-/// Starts a question answered by one key press. It has no options yet, so it
-/// is no prompt: add the first with [`item`](EmptySelectKey::item), which gives
-/// a [`SelectKey`].
+/// Starts a question answered by one key press. Without options it is no prompt
+/// yet.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -46,13 +45,6 @@ impl Case {
 /// )?;
 /// # Ok(())
 /// # }
-/// ```
-///
-/// A question without options does not compile, and `.hint` needs an option
-/// to apply to:
-/// ```compile_fail
-/// # use clacky::prelude::*;
-/// let _ = select_key("Kind").hint("recommended");
 /// ```
 #[must_use]
 pub fn select_key(message: impl Into<String>) -> EmptySelectKey {
@@ -87,8 +79,7 @@ impl EmptySelectKey {
     }
 }
 
-/// A question with one answer, picked by key, out of the options added so
-/// far.
+/// A question with one answer, picked by key, out of the options added so far.
 #[derive(Debug)]
 pub struct SelectKey<V> {
     message: String,
@@ -100,8 +91,8 @@ pub struct SelectKey<V> {
 }
 
 impl<V> SelectKey<V> {
-    /// Adds an option that `key` picks. Two options with the same key fail
-    /// the question with [`Error::DuplicateKey`] when it runs.
+    /// Adds an option that `key` picks. Two options with the same key fail with
+    /// [`Error::DuplicateKey`] when it runs.
     #[must_use]
     pub fn item(mut self, key: char, value: V, label: impl Into<String>) -> Self {
         self.keys.push(key);

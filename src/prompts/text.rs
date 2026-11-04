@@ -16,6 +16,7 @@ use crate::{
 };
 
 /// A line of text.
+///
 /// ```no_run
 /// use clacky::prelude::*;
 /// # fn main() -> clacky::core::error::Result<()> {
@@ -24,14 +25,6 @@ use crate::{
 /// let port: u16 = ui.ask(text("Port?").initial("8080").parse::<u16>())?;
 /// # Ok(())
 /// # }
-/// ```
-///
-/// A placeholder shows only while nothing is typed, so a question cannot have
-/// both a placeholder and an initial text:
-///
-/// ```compile_fail
-/// use clacky::prelude::*;
-/// let _ = text("Name").placeholder("Ada").initial("Grace");
 /// ```
 #[must_use]
 pub fn text(message: impl Into<String>) -> Text {

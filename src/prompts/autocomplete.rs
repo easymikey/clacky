@@ -37,10 +37,6 @@ const NAMED_AT_MOST: usize = 3;
 
 /// The options of an autocomplete and the rule that narrows them down.
 ///
-/// A `Vec<Choice<V>>` is a source already: it keeps the options whose label
-/// or hint holds what was typed, whatever the case. Any other rule is a
-/// function from the typed text to the places of the options to show.
-///
 /// ```
 /// # use clacky::{Choice, Source};
 /// let by_first_letter =
@@ -150,9 +146,8 @@ impl<V> From<Vec<Choice<V>>> for Source<'_, V> {
 
 impl<'f, V> Source<'f, V> {
     /// Narrows by `find` instead: it gets the typed text, also empty, and
-    /// answers the places of the options to show, counted from 0, in the
-    /// order to show. Places past the last option are ignored, and so is a
-    /// place named again.
+    /// answers the places of the options to show, counted from 0, in the order
+    /// to show. Places past the last option and repeated places are ignored.
     #[must_use]
     pub fn matching(self, find: impl Fn(&str) -> Vec<usize> + 'f) -> Self {
         Self {
@@ -230,10 +225,7 @@ impl<'f, V> Search<'f, V> {
 }
 
 /// Starts a question with one answer out of options that narrow down as the
-/// person types. It has no options yet, so it is no prompt: add them with
-/// [`item`](EmptyAutocomplete::item), [`items`](EmptyAutocomplete::items) or
-/// [`source`](EmptyAutocomplete::source). Enter with no option left does
-/// nothing.
+/// person types. Enter with no option left does nothing.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -362,8 +354,8 @@ impl<'f, V> Autocomplete<'f, V> {
         self.searched(|search| search.hint(hint))
     }
 
-    /// The options and the rule that narrows them down, replacing the
-    /// options given before.
+    /// The options and the rule that narrows them down, replacing the options
+    /// given before.
     #[must_use]
     pub fn source(self, source: impl Into<Source<'f, V>>) -> Self {
         self.searched(|search| search.source(source.into()))
@@ -383,12 +375,8 @@ impl<'f, V> Autocomplete<'f, V> {
     }
 }
 
-/// Starts a question with any number of answers out of options that narrow
-/// down as the person types. It has no options yet, so it is no prompt: add
-/// them with [`item`](EmptyAutocompleteMultiSelect::item),
-/// [`items`](EmptyAutocompleteMultiSelect::items) or
-/// [`source`](EmptyAutocompleteMultiSelect::source). Enter with nothing picked
-/// is refused unless the question is
+/// Starts a question with any number of answers out of options that narrow down
+/// as the person types. Enter with nothing picked is refused unless
 /// [`optional`](AutocompleteMultiSelect::optional).
 ///
 /// ```no_run
@@ -514,8 +502,8 @@ impl<'f, V> AutocompleteMultiSelect<'f, V> {
         self.searched(|search| search.hint(hint))
     }
 
-    /// The options and the rule that narrows them down, replacing the
-    /// options given before.
+    /// The options and the rule that narrows them down, replacing the options
+    /// given before.
     #[must_use]
     pub fn source(self, source: impl Into<Source<'f, V>>) -> Self {
         self.searched(|search| search.source(source.into()))

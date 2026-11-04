@@ -99,7 +99,7 @@ pub struct Boxed<'s, T: Terminal> {
 
 impl<T: Terminal> Session<T> {
     /// Starts a framed block with rounded corners, as in `note`. The title may
-    /// be empty. Widths are chosen with [`BoxWidth`].
+    /// be empty.
     pub fn boxed(
         &self,
         title: impl Into<String>,

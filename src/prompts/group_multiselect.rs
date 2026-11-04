@@ -51,9 +51,9 @@ enum Place {
     Item { group: usize, last: bool },
 }
 
-/// Starts a question with any number of answers under group headings. It has
-/// no options yet, so it is no prompt: add them with
-/// [`group`](EmptyGroupMultiSelect::group), which gives a [`GroupMultiSelect`].
+/// Starts a question with any number of answers under group headings. Enter
+/// with nothing picked is refused unless
+/// [`optional`](GroupMultiSelect::optional).
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -68,13 +68,6 @@ enum Place {
 /// )?;
 /// # Ok(())
 /// # }
-/// ```
-///
-/// A question without options does not compile:
-///
-/// ```compile_fail
-/// use clacky::prelude::*;
-/// let _ = group_multiselect("Kind").simulate([Key::Enter]);
 /// ```
 #[must_use]
 pub fn group_multiselect(message: impl Into<String>) -> EmptyGroupMultiSelect {
@@ -91,8 +84,8 @@ pub struct EmptyGroupMultiSelect {
 
 impl EmptyGroupMultiSelect {
     /// The first group of options under the heading `label`. A group without
-    /// options is dropped, and none at all fails the question with
-    /// [`Error::NoChoices`] when it runs.
+    /// options is dropped, and none at all fails with [`Error::NoChoices`] when
+    /// it runs.
     pub fn group<V, C: Into<Choice<V>>>(
         self,
         label: impl Into<String>,
@@ -114,8 +107,7 @@ impl EmptyGroupMultiSelect {
     }
 }
 
-/// A question with any answers out of the groups added so far. Enter with
-/// nothing picked is refused unless it is [`optional`](Self::optional).
+/// A question with any answers out of the groups added so far.
 #[derive(Debug)]
 pub struct GroupMultiSelect<V> {
     message: String,
@@ -131,8 +123,8 @@ pub struct GroupMultiSelect<V> {
 }
 
 impl<V> GroupMultiSelect<V> {
-    /// Adds a group of options under the heading `label`, `(value, label)`
-    /// or `(value, label, hint)` as well as [`Choice`]s, which may be
+    /// Adds a group of options under the heading `label`, `(value, label)` or
+    /// `(value, label, hint)` as well as [`Choice`]s, which may be
     /// [`disabled`](Choice::disabled). A group without options is dropped.
     #[must_use]
     pub fn group<C: Into<Choice<V>>>(
@@ -178,8 +170,8 @@ impl<V> GroupMultiSelect<V> {
         Self { group_pick, ..self }
     }
 
-    /// The options that start picked, counted from 0 over all groups in
-    /// order; others are ignored, and so are disabled ones.
+    /// The options that start picked, counted from 0 over all groups in order;
+    /// others are ignored, and so are disabled ones.
     #[must_use]
     pub fn picked(self, indices: impl IntoIterator<Item = usize>) -> Self {
         Self {
@@ -188,8 +180,8 @@ impl<V> GroupMultiSelect<V> {
         }
     }
 
-    /// Enter with nothing picked answers with an empty list instead of
-    /// being refused.
+    /// Enter with nothing picked answers with an empty list instead of being
+    /// refused.
     #[must_use]
     pub fn optional(self) -> Self {
         Self {
@@ -198,10 +190,10 @@ impl<V> GroupMultiSelect<V> {
         }
     }
 
-    /// The option the cursor starts on, counted like
-    /// [`picked`](Self::picked); by default the first group's row, or the
-    /// first option when groups are [`ItemsOnly`](GroupPick::ItemsOnly). A
-    /// disabled option makes it the next one that is not.
+    /// The option the cursor starts on, counted like [`picked`](Self::picked);
+    /// by default the first group's row, or the first option when groups are
+    /// [`ItemsOnly`](GroupPick::ItemsOnly). A disabled option makes it the next
+    /// one that is not.
     #[must_use]
     pub fn cursor_at(self, index: usize) -> Self {
         Self {

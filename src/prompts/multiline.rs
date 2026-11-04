@@ -29,8 +29,8 @@ pub enum SubmitKey {
     CtrlD,
 }
 
-/// Asks for several lines. Enter adds a line; see [`SubmitKey`] for what
-/// ends the answer, Esc cancels.
+/// Asks for several lines. Enter adds a line, Esc cancels; see [`SubmitKey`]
+/// for what ends the answer.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -44,14 +44,6 @@ pub enum SubmitKey {
 /// # Ok(())
 /// # }
 /// ```
-///
-/// A placeholder shows only while nothing is typed, so a question cannot have
-/// both a placeholder and an initial text:
-///
-/// ```compile_fail
-/// use clacky::prelude::*;
-/// let _ = multiline("Notes").initial("- ").placeholder("What changed?");
-/// ```
 #[must_use]
 pub fn multiline(message: impl Into<String>) -> Multiline {
     Multiline {
@@ -63,8 +55,8 @@ pub fn multiline(message: impl Into<String>) -> Multiline {
     }
 }
 
-/// The question [`multiline`] builds; `S` tells how it starts:
-/// [`Plain`], [`WithPlaceholder`] or [`WithInitial`].
+/// The question [`multiline`] builds; `S` tells how it starts: [`Plain`],
+/// [`WithPlaceholder`] or [`WithInitial`].
 #[derive(Debug)]
 pub struct Multiline<S = Plain> {
     message: String,
@@ -155,8 +147,8 @@ impl<S> Multiline<S> {
     }
 }
 
-/// The text typed so far, where the caret is, and the column Up and Down
-/// aim for once they started moving.
+/// The text typed so far, where the caret is, and the column Up and Down aim
+/// for once they started moving.
 #[derive(Debug)]
 pub struct Lines {
     editor: TypedAnswer,

@@ -16,8 +16,8 @@ use crate::{
     terminal::Terminal,
 };
 
-/// A log entry with a symbol or spacing of the caller's choosing; build it
-/// with [`Session::log_entry`].
+/// A log entry with a symbol or spacing of the caller's choosing; build it with
+/// [`Session::log_entry`].
 ///
 /// ```no_run
 /// # use clacky::{core::session::Session, render::draw::Tone, terminal::Terminal};
@@ -63,9 +63,8 @@ impl<T: Terminal> LogEntry<'_, T> {
         }
     }
 
-    /// How many bare rail rows follow the entry; one by default. Clack puts
-    /// them before the entry, here the previous element already ends on a rail
-    /// row, so they go after.
+    /// How many bare rail rows follow the entry; one by default. They go after
+    /// the entry, not before.
     #[must_use]
     pub fn spacing(self, rows: usize) -> Self {
         Self {

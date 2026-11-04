@@ -16,14 +16,10 @@ pub type Outcome<E = Error> = Result<Option<String>, E>;
 type Work<'s, T, E> =
     Box<dyn for<'a, 'b> FnOnce(&'a mut Spinner<'b, T>) -> Outcome<E> + 's>;
 
-/// Closures run in order, each under a spinner. Build it with
-/// [`Session::tasks`].
+/// Closures run in order, each under a spinner. A failing task ends its line in
+/// red and stops the run; the error is [`Error`] unless
+/// [`Session::tasks_failing_with`] names one.
 ///
-/// A closure that works long ticks the spinner it is given, or the line stays
-/// still. A task that fails ends its line in red, with the title and the
-/// error, and stops the run. A task fails with [`Error`] unless
-/// [`Session::tasks_failing_with`] names an error of the caller's own, which
-/// must be made from an [`Error`] for the failures of the terminal.
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
 /// # fn setup<T: Terminal>(session: &Session<T>) -> clacky::core::error::Result<()> {
@@ -120,8 +116,8 @@ fn finish<T: Terminal, E: From<Error> + Display>(
 #[cfg(feature = "tokio")]
 type Step<'s, E> = Pin<Box<dyn Future<Output = Outcome<E>> + 's>>;
 
-/// Futures run in order, each under a spinner that ticks on the clock. Build
-/// it with [`Session::async_tasks`].
+/// Futures run in order, each under a spinner that ticks on the clock.
+///
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
 /// # async fn setup<T: Terminal>(session: &Session<T>) -> clacky::core::error::Result<()> {
@@ -163,8 +159,8 @@ impl<T: Terminal> Session<T> {
         self.async_tasks_failing_with()
     }
 
-    /// An empty list of tasks that are futures and fail with `E`, which the
-    /// run gives back.
+    /// An empty list of tasks that are futures and fail with `E`, which the run
+    /// gives back.
     pub fn async_tasks_failing_with<E: From<Error> + Display>(
         &self,
     ) -> AsyncTasks<'_, T, E> {

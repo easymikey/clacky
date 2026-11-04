@@ -30,16 +30,10 @@ use syn::{
 
 use crate::{attr::AskAttr, words::words};
 
-/// Makes an enum of unit variants a choice.
-///
-/// The enum gets `Choices` and `Answer`, so asking it is a select over the
-/// variants. A variant is labelled by `#[ask("Label")]` or by its name in
-/// words, and `#[ask("Label", hint = "..")]` adds a hint. The enum needs no
-/// `PartialEq`: a given answer is found by its label, so two variants with one
-/// label are a compile error.
-///
-/// The generated code names `::clacky::..`, so the dependency must be named
-/// `clacky`.
+/// Makes an enum of unit variants a choice (the dependency must be named
+/// `clacky`), labelled by its name in words unless `#[ask("Label")]`, needing
+/// no `PartialEq` (two variants with one label are a compile error);
+/// `#[ask("Label", hint = "..")]` on a variant sets its label and hint.
 ///
 /// ```ignore
 /// #[derive(clacky::Choices)]
@@ -59,24 +53,11 @@ pub fn derive_choices(input: TokenStream) -> TokenStream {
         .into()
 }
 
-/// Makes a struct with named fields a form asked field by field.
-///
-/// The struct gets `Type::form()`, which asks each field in order through
-/// `Answer`. `#[ask("Label")]` on a field sets the question; without it the
-/// question is the field name in words. After the label a field takes
-/// `default = ..`, `placeholder = ".."`, `validate = path::to::check`,
-/// `optional` (for a `Vec`), `parse` (read the text as the field type, which
-/// then needs `Display` to show a given answer) and `skip` (not asked,
-/// `Default`); see `clacky::core::askable` for the types a field can have.
-///
-/// `Type::form()` is a `TypeForm`, with a setter per asked field named like
-/// the field (`with_` first when that name is an `Ask` method: `run`,
-/// `map`, `abort` or `timeout`), taking an `Option`: `Some` is the answer,
-/// shown answered and not asked, `None` asks. `#[ask(form_name = "Known")]` on
-/// the struct renames `TypeForm`.
-///
-/// The generated code names `::clacky::..`, so the dependency must be named
-/// `clacky`.
+/// Makes a struct with named fields a form asked field by field, with a setter
+/// per field (`with_` first when named like an `Ask` method) taking an
+/// `Option`, and `#[ask(form_name = "..")]` renaming `TypeForm`; a field takes
+/// `#[ask("Label", default = .., placeholder = "..", validate = path, optional,
+/// parse, skip)]`.
 ///
 /// ```ignore
 /// #[derive(clacky::Form)]
@@ -377,8 +358,7 @@ fn expand_form(
         }
 
         impl #name {
-            /// Asks each field in order; see the setters of the form to
-            /// give answers already known.
+            /// Asks each field in order; see the setters of the form to give answers already known.
             #[must_use]
             #vis fn form() -> #form {
                 #form {

@@ -101,15 +101,11 @@ fn line_row(skin: &Skin, room: Option<usize>, line: &str) -> String {
     format!("{}  {}", bar(skin), skin.paint(skin.theme().hint, &clipped))
 }
 
-/// A title over a log that shows its last lines while the task runs. Build it
-/// with [`Session::task_log`]. Nothing is drawn before the first line; on a
-/// terminal that is not live nothing is drawn but the end. While it repaints
-/// the terminal is quiet and the cursor hidden, until the end or the drop. With
-/// accessible output every new row is written as a line once, nothing is
-/// cleared, and the end adds its own lines under the log.
+/// A title over a log that shows its last lines while the task runs. Nothing is
+/// drawn before the first line, or on a terminal that is not live until the
+/// end; success clears the log and leaves one line, failure leaves the whole
+/// log.
 ///
-/// Success clears the log and leaves one line; failure leaves the whole log
-/// under the message.
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
 /// # fn build<T: Terminal>(session: &Session<T>) -> clacky::core::error::Result<()> {
@@ -149,8 +145,7 @@ impl<T: Terminal> Session<T> {
 
 impl<'s, T: Terminal> TaskLog<'s, T> {
     /// Shows only the last `limit` lines of the whole log while it repaints, so
-    /// it stays on the screen; 10 by default. The end still leaves all of them
-    /// on failure.
+    /// it stays on the screen; 10 by default. Failure still leaves all of them.
     #[must_use]
     pub const fn limit(mut self, limit: NonZeroUsize) -> Self {
         self.limit = Some(limit);
@@ -357,7 +352,7 @@ impl<T: Terminal> Drop for TaskLog<'_, T> {
     }
 }
 
-/// A named part of a task log. Build it with [`TaskLog::group`].
+/// A named part of a task log.
 #[derive(Debug)]
 pub struct TaskLogGroup<'a, 's, T: Terminal> {
     log: &'a mut TaskLog<'s, T>,

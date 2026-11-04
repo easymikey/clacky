@@ -27,6 +27,7 @@ pub enum OnError {
 }
 
 /// A secret; the answer is wiped from memory when dropped.
+///
 /// ```no_run
 /// use clacky::prelude::*;
 /// # fn main() -> clacky::core::error::Result<()> {
@@ -60,8 +61,8 @@ impl Password {
         }
     }
 
-    /// The character each typed character shows as; the `mask` of the
-    /// session's symbols by default.
+    /// The character each typed character shows as; the `mask` of the session's
+    /// symbols by default.
     #[must_use]
     pub fn mask(self, mask: char) -> Self {
         Self {

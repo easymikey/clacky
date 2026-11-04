@@ -30,9 +30,8 @@ use crate::{
     values::line::Cancellation,
 };
 
-/// Starts a question with any number of answers. It has no options yet, so
-/// it is no prompt: add them with [`item`](EmptyMultiSelect::item) or
-/// [`items`](EmptyMultiSelect::items), which give a [`MultiSelect`].
+/// Starts a question with any number of answers. Enter with nothing picked is
+/// refused unless [`optional`](MultiSelect::optional).
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -48,13 +47,6 @@ use crate::{
 /// )?;
 /// # Ok(())
 /// # }
-/// ```
-///
-/// A question without options does not compile:
-///
-/// ```compile_fail
-/// use clacky::prelude::*;
-/// let _ = multiselect("Kind").simulate([Key::Enter]);
 /// ```
 #[must_use]
 pub fn multiselect(message: impl Into<String>) -> EmptyMultiSelect {
@@ -99,8 +91,7 @@ impl EmptyMultiSelect {
     }
 }
 
-/// A question with any answers out of the options added so far. Enter with
-/// nothing picked is refused unless it is [`optional`](Self::optional).
+/// A question with any answers out of the options added so far.
 #[derive(Debug)]
 pub struct MultiSelect<V, S = ByEq> {
     message: String,
@@ -177,8 +168,8 @@ impl<V, S> MultiSelect<V, S> {
         }
     }
 
-    /// Enter with nothing picked answers with an empty list instead of
-    /// being refused.
+    /// Enter with nothing picked answers with an empty list instead of being
+    /// refused.
     #[must_use]
     pub fn optional(self) -> Self {
         Self {
@@ -187,8 +178,8 @@ impl<V, S> MultiSelect<V, S> {
         }
     }
 
-    /// The option the cursor starts on, counted from 0; the last one when
-    /// that is past the end, and the next one that is not disabled when it is.
+    /// The option the cursor starts on, counted from 0; the last one when that
+    /// is past the end, and the next one that is not disabled when it is.
     #[must_use]
     pub fn cursor_at(self, index: usize) -> Self {
         Self {

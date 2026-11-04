@@ -73,8 +73,7 @@ impl Flow {
 
     /// Draws what is whole: all of `held` when `done`, else up to the last
     /// finished word, or all of it once its word is wider than a row. A wide
-    /// character (width 2) ends a word too: the scripts that use them have no
-    /// spaces, and text may wrap after any of them.
+    /// character (width 2) ends a word too.
     fn settle(&mut self, done: bool) -> String {
         let held = std::mem::take(&mut self.held);
         let avail = self.width.map(|width| width.saturating_sub(LEAD).max(1));
@@ -159,12 +158,9 @@ impl Flow {
     }
 }
 
-/// Text written in pieces; build it with [`Session::stream`]. The tone's
-/// symbol starts the first row and the rail the rest. Rows wrap at spaces at
-/// the terminal width, so a word is held back until it is whole or wider than
-/// a row. Dropping the stream before [`finish`](Self::finish) ends the open
-/// row, and an error from that write is lost. With accessible output a row is
-/// written only when it is done.
+/// Text written in pieces; build it with [`Session::stream`]. Dropping it
+/// before [`finish`](Self::finish) ends the open row and loses a write error;
+/// with accessible output a row is written only when done.
 ///
 /// ```no_run
 /// # use clacky::{core::session::Session, render::draw::Tone, terminal::Terminal};

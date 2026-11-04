@@ -30,10 +30,9 @@ use crate::{
 
 const ROWS: usize = 5;
 
-/// A path, completed with Tab from the directory it is typed in.
+/// A path, completed with Tab from the directory it is typed in; Up and Down
+/// pick a suggestion, and directories end with the separator.
 ///
-/// Up and Down pick a suggestion, Tab completes it; directories end with the
-/// separator, so Tab again goes inside.
 /// ```no_run
 /// use clacky::prelude::*;
 /// # fn main() -> clacky::core::error::Result<()> {
@@ -68,8 +67,8 @@ pub struct PathPrompt<'f> {
 }
 
 impl PathPrompt<'_> {
-    /// Where directories are listed and paths checked; the real file system
-    /// by default.
+    /// Where directories are listed and paths checked; the real file system by
+    /// default.
     pub fn files<F: Files>(self, files: &F) -> PathPrompt<'_> {
         PathPrompt {
             message: self.message,
@@ -98,8 +97,7 @@ impl PathPrompt<'_> {
         Self { kind, ..self }
     }
 
-    /// What a leading `~` stands for. The caller reads it from the
-    /// environment; without it `~` is an ordinary character.
+    /// What a leading `~` stands for. Without it `~` is an ordinary character.
     #[must_use]
     pub fn home(self, home: Option<PathBuf>) -> Self {
         Self { home, ..self }

@@ -16,6 +16,7 @@ use crate::{
 const SEPARATOR: char = '-';
 
 /// A date, typed as digits or stepped with Up and Down.
+///
 /// ```no_run
 /// use clacky::{
 ///     prelude::*,

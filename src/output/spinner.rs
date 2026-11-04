@@ -157,13 +157,9 @@ fn timer(elapsed: Duration) -> String {
     }
 }
 
-/// A turning frame with a message. Build it with [`Session::spinner`]; the
-/// caller's clock drives it through [`tick`](Self::tick), every [`DELAY`].
+/// A turning frame with a message. Ctrl-C ends it with a red `Canceled` line
+/// and [`Error::Interrupted`].
 ///
-/// Ctrl-C ends it with a red `Canceled` line and
-/// [`Error::Interrupted`] from the call
-/// that noticed it. A spinner dropped while running only shows the cursor
-/// again.
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
 /// # fn work<T: Terminal>(session: &Session<T>) -> clacky::core::error::Result<()> {
@@ -233,6 +229,7 @@ impl<'s, T: Terminal> Spinner<'s, T> {
 
     /// Opens the rail and draws the first frame. Does nothing when started
     /// before.
+    ///
     /// # Errors
     /// The terminal failed, or Ctrl-C came.
     pub fn start(&mut self, message: impl Into<String>) -> Result<()> {
@@ -285,6 +282,7 @@ impl<'s, T: Terminal> Spinner<'s, T> {
 
     /// Turns the frame one step; call it every [`DELAY`]. A spinner that draws
     /// lines only counts the step.
+    ///
     /// # Errors
     /// The terminal failed, or Ctrl-C came.
     pub fn tick(&mut self) -> Result<()> {
@@ -325,8 +323,8 @@ impl<'s, T: Terminal> Spinner<'s, T> {
         self.end(Ending::Error, &message.into())
     }
 
-    /// Ticks every [`DELAY`] until `work` is done; the spinner goes on
-    /// running, to be ended by the caller.
+    /// Ticks every [`DELAY`] until `work` is done; the spinner goes on running,
+    /// to be ended by the caller.
     /// # Errors
     /// The terminal failed, or Ctrl-C came before `work` was done.
     #[cfg(feature = "tokio")]

@@ -32,9 +32,8 @@ impl BarStyle {
     }
 }
 
-/// A bar that fills from `0` to `max`. Build it with [`Session::progress`].
-/// It turns like a [`Spinner`]; the caller's clock drives it through
-/// [`tick`](Self::tick).
+/// A bar that fills from `0` to `max`.
+///
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
 /// # fn copy<T: Terminal>(session: &Session<T>) -> clacky::core::error::Result<()> {
@@ -56,8 +55,8 @@ pub struct Progress<'s, T: Terminal> {
 }
 
 impl<T: Terminal> Session<T> {
-    /// A progress bar for `max` steps. With `max` of `0` there is nothing to
-    /// wait for, and the bar is full from the start.
+    /// A progress bar for `max` steps. With `max` of `0` the bar is full from
+    /// the start.
     #[must_use]
     pub fn progress(&self, max: u32) -> Progress<'_, T> {
         Progress {
@@ -141,8 +140,8 @@ impl<T: Terminal> Progress<'_, T> {
     }
 
     /// The bar, or `value/max` where the bar would show nothing: with no color
-    /// the filled and the empty part look alike, and a screen reader would
-    /// read 40 glyphs.
+    /// the filled and the empty part look alike, and a screen reader would read
+    /// 40 glyphs.
     fn bar(&self) -> String {
         let skin = self.session.skin();
         match (skin.color(), self.spinner.mode()) {

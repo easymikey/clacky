@@ -13,11 +13,9 @@ use crate::{
     values::line::{Cancellation, CharFilter, TypedAnswer},
 };
 
-/// A number, typed in or stepped with Up and Down.
-///
-/// The answer is the number itself, no `parse` needed. The type comes from the
-/// bounds and the binding, or from a turbofish; a number that nothing
-/// constrains is an `i32`, as any integer literal is.
+/// A number, typed in or stepped with Up and Down by the step, stopping at the
+/// bounds; only digits, a leading `-` (signed) and one `.` (floats) are typed,
+/// Enter on nothing takes the default, and a number out of range is refused.
 ///
 /// ```no_run
 /// use clacky::prelude::*;
@@ -28,11 +26,6 @@ use crate::{
 /// # Ok(())
 /// # }
 /// ```
-///
-/// Every integer type and `f32` and `f64` can be asked. Only digits, a leading
-/// `-` (signed types) and one `.` (floats) are typed; other keys are ignored.
-/// Up and Down add and subtract the step, stopping at the bounds. Enter on
-/// nothing takes the default, and a number out of range is refused.
 #[must_use]
 pub fn number<T: Numeric>(message: impl Into<String>) -> Number<T> {
     Number {
@@ -163,7 +156,7 @@ integers!(Unsigned: u8, u16, u32, u64, u128, usize);
 integers!(Signed: i8, i16, i32, i64, i128, isize);
 floats!(f32, f64);
 
-/// Why a number is refused. The words come from the session's [`Messages`].
+/// Why a number is refused.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NumberNotice {
     /// Nothing was typed and there is no default.
