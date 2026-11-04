@@ -1774,10 +1774,10 @@ mod tests {
             "{asked:?}"
         );
         let ended = bare(Script::new(TerminalKind::Redirected, [], []));
-        let asked = ended.ask(ask_text("Name"));
+        let ended_asked = ended.ask(ask_text("Name"));
         assert!(
-            matches!(asked, Err(Error::NoInput { ref question }) if question == "Name"),
-            "{asked:?}"
+            matches!(ended_asked, Err(Error::NoInput { ref question }) if question == "Name"),
+            "{ended_asked:?}"
         );
         let piped = bare(Script::new(TerminalKind::Redirected, [], ["Ada"]));
         assert_eq!(piped.ask(ask_text("Name")).ok().as_deref(), Some("Ada"));
