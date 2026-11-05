@@ -140,7 +140,7 @@ mod terminating {
 
     #[must_use = "SIGTERM, SIGHUP and SIGINT are handled only while the guard lives"]
     #[derive(Debug)]
-    /// While this lives, SIGTERM, SIGHUP and SIGINT put the terminal back and
+    /// While this lives, SIGTERM, SIGHUP and Ctrl-C put the terminal back and
     /// show the cursor before ending the program.
     pub(crate) struct Terminating;
 
@@ -351,7 +351,7 @@ mod tests {
         current.sa_sigaction
     }
 
-    /// Tests that change what SIGTERM, SIGHUP and SIGINT do run one at a time.
+    /// Tests that change what SIGTERM, SIGHUP and Ctrl-C do run one at a time.
     static TERMINATION: Mutex<()> = Mutex::new(());
 
     fn set_handler(signal: libc::c_int, handler: usize) -> libc::sigaction {

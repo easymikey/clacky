@@ -127,12 +127,15 @@ impl Console {
         #[cfg(windows)]
         tty::remember();
         let stderr = StreamKind::terminal_if(io::stderr().is_terminal());
+        // Redraws need escapes whether or not there is colour.
+        let ansi = ansi_ready();
         let kind = kind_of(
             StreamKind::terminal_if(io::stdin().is_terminal()),
             stderr,
             term_type,
+            ansi,
         );
-        let color = ColorHint::from_process().colored_on(stderr) && ansi_ready();
+        let color = ColorHint::from_process().colored_on(stderr) && ansi;
         Self { kind, color }
     }
 }
@@ -152,9 +155,10 @@ const fn kind_of(
     stdin: StreamKind,
     stderr: StreamKind,
     term_type: TerminalType,
+    ansi: bool,
 ) -> TerminalKind {
     match (stdin, stderr, term_type) {
-        (StreamKind::Terminal, StreamKind::Terminal, TerminalType::Capable) => {
+        (StreamKind::Terminal, StreamKind::Terminal, TerminalType::Capable) if ansi => {
             TerminalKind::Live
         }
         (StreamKind::Terminal, _, _) => TerminalKind::Dumb,
@@ -338,6 +342,19 @@ mod tests {
         #[case] term_type: TerminalType,
         #[case] kind: TerminalKind,
     ) {
-        assert_eq!(kind_of(stdin, stderr, term_type), kind);
+        assert_eq!(kind_of(stdin, stderr, term_type, true), kind);
+    }
+
+    #[test]
+    fn a_console_that_reads_no_escapes_is_dumb() {
+        assert_eq!(
+            kind_of(
+                StreamKind::Terminal,
+                StreamKind::Terminal,
+                TerminalType::Capable,
+                false
+            ),
+            TerminalKind::Dumb
+        );
     }
 }
