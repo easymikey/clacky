@@ -162,7 +162,8 @@ fn timer(elapsed: Duration) -> String {
 }
 
 /// A turning frame with a message. Ctrl-C ends it with a red `Canceled` line
-/// and [`Error::Interrupted`]; a spinner dropped while it runs
+/// and [`Error::Interrupted`], seen at the next `tick`, `message` or `stop`
+/// (work that blocks holds it until then); a spinner dropped while it runs
 /// ends the same way.
 ///
 /// ```no_run

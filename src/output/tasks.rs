@@ -17,7 +17,9 @@ type Work<'s, T, E> =
 
 /// Closures run in order, each under a spinner. A failing task ends its line in
 /// red and stops the run; the error is [`Error`] unless
-/// [`Session::tasks_failing_with`] names one.
+/// [`Session::tasks_failing_with`] names one. Ctrl-C is seen at the next
+/// `tick`, `message` or `stop` of a task's spinner; work that blocks holds it
+/// until then.
 ///
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
@@ -330,16 +332,15 @@ mod tests {
 
     #[test]
     fn the_async_run_can_be_sent_to_another_thread() {
-        fn assert_send<T: Send>(_: T) {}
-        let check = |session: &Session<Console>| {
-            assert_send(
-                session
-                    .async_tasks()
-                    .task("Fetching", async { Ok(None) })
-                    .run(),
-            );
-        };
-        let _ = check;
+        fn spawnable(
+            session: &Session<Console>,
+        ) -> impl Future<Output = Result<()>> + Send + '_ {
+            session
+                .async_tasks()
+                .task("Fetching", async { Ok(None) })
+                .run()
+        }
+        std::hint::black_box(spawnable);
     }
 
     #[tokio::test]
