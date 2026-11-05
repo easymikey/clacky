@@ -545,3 +545,19 @@ mod hygiene {
         Ok(())
     }
 }
+
+#[test]
+fn an_optional_number_takes_only_what_a_number_takes() -> Result<()> {
+    let nan = session(typed("nan").chain([Key::Enter]));
+    assert_eq!(nan.ask(Option::<f64>::prompt("Ratio"))?, None);
+    let big = session(typed("300").chain([Key::Enter]));
+    assert!(big.ask(Option::<u8>::prompt("Retries")).is_err());
+    let shown = big.terminal().written();
+    assert!(
+        shown.contains("Enter a number between 0 and 255"),
+        "{shown}"
+    );
+    let some = session(typed("7").chain([Key::Enter]));
+    assert_eq!(some.ask(Option::<u8>::prompt("Retries"))?, Some(7));
+    Ok(())
+}

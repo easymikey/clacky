@@ -11,7 +11,8 @@
 //! | `PathBuf` | path | `&Path` | refused |
 //! | an enum with `#[derive(Choices)]` | select | `&` the enum | the first variant |
 //! | `Vec<E>` of such an enum | multiselect | `Vec<&E>` | refused unless `optional` |
-//! | `Option<String>`, `Option<number>` | text (read as a number) | none yet | `None` |
+//! | `Option<String>` | text | none yet | `None` |
+//! | `Option<number>` | number | none yet | `None` |
 //! | `Option<E>` of such an enum | select with a last "Skip" | none yet | the first variant |
 //!
 //! # Defaults
@@ -57,7 +58,7 @@ use crate::{
         confirm::{Confirm, Reply, confirm},
         date::{DatePrompt, date},
         multiselect::{MultiSelect, multiselect},
-        number::{Number, number},
+        number::{Number, OrNone, number},
         path::{PathPrompt, path},
         select::{Select, select},
         text::{Text, WithPlaceholder, text},
@@ -299,10 +300,10 @@ macro_rules! numbers {
         }
 
         impl Answer for Option<$number> {
-            type Prompt = Blanked<$number>;
+            type Prompt = OrNone<$number>;
 
-            fn prompt(message: &str) -> Self::Prompt {
-                blanked(typed(message, None, None))
+            fn prompt(message: &str) -> OrNone<$number> {
+                OrNone::new(number(message))
             }
         }
 
@@ -314,11 +315,17 @@ macro_rules! numbers {
                 message: &str,
                 placeholder: Option<&'static str>,
                 default: Option<Infallible>,
-            ) -> Self::Prompt {
+            ) -> OrNone<$number> {
                 default.map_or_else(
-            || blanked(typed(message, placeholder, None)),
-            |never| match never {},
-        )
+                    || {
+                        OrNone::new(<$number as Fillable>::filled(
+                            message,
+                            placeholder,
+                            None,
+                        ))
+                    },
+                    |never| match never {},
+                )
             }
         }
     )+};

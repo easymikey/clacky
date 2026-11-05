@@ -460,6 +460,76 @@ impl<T: Numeric> Prefill for Number<T> {
     }
 }
 
+/// A [`Number`] whose empty answer is `None`.
+#[derive(Debug)]
+#[doc(hidden)]
+pub struct OrNone<T: Numeric>(Number<T>);
+
+impl<T: Numeric> OrNone<T> {
+    /// The question that takes Enter on nothing as `None`.
+    #[must_use]
+    pub const fn new(question: Number<T>) -> Self {
+        Self(question)
+    }
+}
+
+impl<T: Numeric> Prompt for OrNone<T> {
+    type Output = Option<T>;
+    type State = NumberState<T>;
+
+    fn message(&self) -> &str {
+        self.0.message()
+    }
+
+    fn start(&self) -> Result<NumberState<T>> {
+        self.0.start()
+    }
+
+    fn update(&self, state: NumberState<T>, key: Key) -> Next<NumberState<T>> {
+        if key == Key::Enter && state.answer.text().trim().is_empty() {
+            Next::Submit(state)
+        } else {
+            self.0.update(state, key)
+        }
+    }
+
+    fn view(&self, state: &NumberState<T>, phase: Phase<'_>, frame: &mut Frame) {
+        self.0.view(state, phase, frame);
+    }
+
+    fn finish(self, state: NumberState<T>) -> Result<Option<T>> {
+        if state.answer.text().trim().is_empty() {
+            Ok(None)
+        } else {
+            self.0.finish(state).map(Some)
+        }
+    }
+
+    fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
+        self.0.misread(line, messages)
+    }
+
+    fn redirected(&self) -> Redirected {
+        Redirected::Line
+    }
+
+    fn by_default(&self) -> Option<NumberState<T>> {
+        Some(NumberState::empty())
+    }
+}
+
+impl<T: Numeric> Prefill for OrNone<T> {
+    fn shown_for(&self, answer: &Option<T>, messages: &Messages) -> Option<String> {
+        answer
+            .as_ref()
+            .map_or_else(|| Some(String::new()), |it| self.0.shown_for(it, messages))
+    }
+
+    fn refusal_of(&self, _answer: &Option<T>, _messages: &Messages) -> Refusal {
+        Refusal::Number(self.0.notice())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #![expect(clippy::panic_in_result_fn, reason = "assert is the point of a test")]
