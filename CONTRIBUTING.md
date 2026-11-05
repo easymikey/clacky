@@ -11,8 +11,7 @@ cargo bin just hooks
 
 - `rust-toolchain.toml` pins the stable toolchain, and `rustup toolchain install` installs it. The nightly named in `justfile` is used only for formatting.
 - Every other tool, `just` included, is pinned in `Cargo.toml` and runs as `cargo bin <tool>`. It builds into `.bin/` on first use, or comes prebuilt when [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall) is installed.
-- `cargo bin just hooks` points git at `.githooks/`: `pre-commit` runs `fmt-check` and `clippy`, `commit-msg` checks the subject.
-- The spell check builds `cargo-spellcheck` against libclang. On Linux install `libclang-dev`. On macOS the Xcode command line tools have it; build it once with `RUSTFLAGS="-C link-arg=-Wl,-rpath,/Library/Developer/CommandLineTools/usr/lib" cargo bin cargo-spellcheck --version`.
+- `cargo bin just hooks` points git at `.githooks/`: `pre-commit` runs `fmt-check` and `spell` (seconds), `commit-msg` checks the subject, `pre-push` runs `clippy`.
 
 ## Checks
 
@@ -21,27 +20,20 @@ cargo bin just hooks
 - `cargo bin just fmt` formats the code.
 - Recipes call each tool as `cargo bin cargo-<tool>`, not through a cargo alias, which would shadow a copy installed globally.
 - CI (`.github/workflows/ci.yml`) runs the same recipes after the shared setup action `.github/actions/setup`. Each runner in its matrix names its recipes. On Linux CI also checks every commit subject in the push or pull request with `cargo bin just commits <range>`.
-- A real word the spell check flags goes into `spellcheck.dic`, one per line, and the count on its first line goes up by one.
+- The spell check is [`typos`](https://github.com/crate-ci/typos). A real word it flags goes under `[default.extend-words]` in `_typos.toml`.
 
 ## Commit messages
 
 [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`, the subject in lower case and without a version number. The `commit-msg` hook refuses anything else, and `cargo bin just commits` checks a range (`origin/main..HEAD` by default). Scopes are listed in the project section below.
 
-- `feat` goes into the changelog under "Added".
-- `fix` goes under "Fixed".
-- `refactor`, `perf` and `revert` go under "Changed".
-- `docs`, `test`, `build`, `ci`, `chore` and `style` stay out of the changelog.
-- A breaking change takes `!` after the type (`feat!: ...`) or a `BREAKING CHANGE:` footer, and always reaches the changelog.
-- While a crate is at 0.x, `feat` and `fix` bump the patch version and a breaking change bumps the minor version.
+The type does not decide the version or the changelog: the maintainer picks the level at release and the changelog is written by hand. A breaking change takes `!` after the type (`feat!: ...`).
 
 ## Releases
 
-- Each crate has its own version, a `CHANGELOG.md` in its directory, a tag `<crate>-v<version>` and a GitHub release. [release-plz](https://release-plz.dev) (`release-plz.toml`) picks each changed crate's bump from the commits.
-- A push to `main` runs CI and publishes nothing, unless its last commit is `chore: release` and CI passes.
-- To release from GitHub, run the `release` workflow on `main` from the Actions tab. It runs `cargo bin just release`, commits `chore: release`, pushes it and runs `cargo bin just publish`.
-- To release locally, run `cargo bin just release`, review the diff, commit it as `chore: release` and push. Once CI on `main` passes, the `release` workflow runs `cargo bin just publish`.
-- `cargo bin just publish` needs `GITHUB_TOKEN` and `CARGO_REGISTRY_TOKEN`. It publishes each crate version crates.io lacks, tags it and creates its GitHub release; with nothing new it does nothing.
-- The `release` workflow runs only in the `easymikey` repository, so a fork never publishes.
+- Each crate has its own version, a `CHANGELOG.md` in its directory and a tag `<crate>-v<version>`.
+- Write the changelog by hand under `## Unreleased`, in the same commit as the change: [Keep a Changelog](https://keepachangelog.com) groups `Added`, `Changed`, `Fixed` and `Removed`, one line per change that starts with what the user types or sees, no scopes. A breaking change goes in a first paragraph of the version, `Breaking: ...`, that says what to do.
+- `cargo bin just ship <level>` (`patch`, `minor` or `major`) runs every check, the semver check and a dry run of `cargo-release`. It needs a clean `main`. Add `execute` (`cargo bin just ship patch execute`) to release for real: it bumps the versions, renames `## Unreleased` to `## <version> (<date>)`, commits `chore: release`, tags, publishes and pushes. Run `cargo login` once on the maintainer's machine first.
+- A tag push runs the `release` workflow, which makes a draft GitHub release from the changelog section with `cargo bin just release-notes <tag>` and then publishes it. It fails when the section is missing or empty, and it runs only in the `easymikey` repository. CI holds no crates.io token.
 
 ## Layout
 
@@ -70,4 +62,4 @@ tests/         derive tests (features `derive` and `fake`)
 - CI runs `default` on Linux, and `clippy clippy-no-default check examples` on macOS and Windows.
 - `size` (see `docs/size.md`) and `bench` are local helpers outside `default`.
 - Tags are `clacky-vX.Y.Z` and `clacky-derive-vX.Y.Z`. `clacky` pins `clacky-derive` with `=`, so a derive release bumps both crates.
-- `cargo bin just release` also runs `cargo-semver-checks` (pinned like the other tools), and an API break it finds sets the bump.
+- `cargo bin just ship` runs `cargo-semver-checks` (pinned like the other tools) before the release step; an API break it finds needs a higher level.
