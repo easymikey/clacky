@@ -465,10 +465,8 @@ impl<T: Numeric> Prefill for Number<T> {
 #[doc(hidden)]
 pub struct OrNone<T: Numeric>(Number<T>);
 
-impl<T: Numeric> OrNone<T> {
-    /// The question that takes Enter on nothing as `None`.
-    #[must_use]
-    pub const fn new(question: Number<T>) -> Self {
+impl<T: Numeric> From<Number<T>> for OrNone<T> {
+    fn from(question: Number<T>) -> Self {
         Self(question)
     }
 }

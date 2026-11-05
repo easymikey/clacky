@@ -212,11 +212,13 @@ type Blanked<T> = OrBlank<Parse<Typed, Blank<T>>>;
 
 type Typed = Text<WithPlaceholder>;
 
-fn blanked<T: FromStr>(question: Typed) -> Blanked<T>
+impl<T: FromStr> From<Typed> for Blanked<T>
 where
     T::Err: Display,
 {
-    OrBlank(question.default(String::new()).parse::<Blank<T>>())
+    fn from(question: Typed) -> Self {
+        OrBlank(question.default(String::new()).parse::<Blank<T>>())
+    }
 }
 
 fn typed(message: &str, placeholder: Option<&str>, default: Option<String>) -> Typed {
@@ -252,21 +254,27 @@ impl Answer for Option<String> {
     type Prompt = Blanked<String>;
 
     fn prompt(message: &str) -> Self::Prompt {
-        blanked(typed(message, None, None))
+        typed(message, None, None).into()
     }
 }
 
-impl Fillable for Option<String> {
-    type Placeholder = &'static str;
+/// The question of `T` without a default, where an empty answer is `None`.
+impl<T> Fillable for Option<T>
+where
+    T: Fillable,
+    Self: Answer,
+    <Self as Answer>::Prompt: From<T::Prompt>,
+{
+    type Placeholder = T::Placeholder;
     type Default = Infallible;
 
     fn filled(
         message: &str,
-        placeholder: Option<&'static str>,
+        placeholder: Option<T::Placeholder>,
         default: Option<Infallible>,
     ) -> Self::Prompt {
         default.map_or_else(
-            || blanked(typed(message, placeholder, None)),
+            || T::filled(message, placeholder, None).into(),
             |never| match never {},
         )
     }
@@ -304,29 +312,7 @@ macro_rules! numbers {
             type Prompt = OrNone<$number>;
 
             fn prompt(message: &str) -> OrNone<$number> {
-                OrNone::new(number(message))
-            }
-        }
-
-        impl Fillable for Option<$number> {
-            type Placeholder = &'static str;
-            type Default = Infallible;
-
-            fn filled(
-                message: &str,
-                placeholder: Option<&'static str>,
-                default: Option<Infallible>,
-            ) -> OrNone<$number> {
-                default.map_or_else(
-                    || {
-                        OrNone::new(<$number as Fillable>::filled(
-                            message,
-                            placeholder,
-                            None,
-                        ))
-                    },
-                    |never| match never {},
-                )
+                number(message).into()
             }
         }
     )+};
