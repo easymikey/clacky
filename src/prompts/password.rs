@@ -3,7 +3,6 @@
 use unicode_segmentation::UnicodeSegmentation as _;
 use zeroize::Zeroizing;
 
-#[cfg(feature = "secrecy")] use crate::core::ask::Ask;
 use crate::{
     core::{
         ask::{Frame, Key, Next, Peek, Phase, Prefill, Prompt, Redirected},
@@ -95,15 +94,6 @@ impl Password {
             },
         }
     }
-
-    /// Answers a [`secrecy::SecretString`] instead of a `Zeroizing<String>`.
-    #[cfg(feature = "secrecy")]
-    #[must_use]
-    pub fn secret(self) -> impl Ask<Output = secrecy::SecretString> {
-        // Copied to an exact-size box: moving the 256-byte buffer would shrink it by
-        // realloc and leave the old block unwiped; `text` is wiped on drop.
-        self.map(|text| secrecy::SecretString::from(text.as_str()))
-    }
 }
 
 impl Prompt for Password {
@@ -181,7 +171,7 @@ mod tests {
     use super::{OnError, password};
     use crate::{
         core::{
-            ask::{Key, Peek, Prefill, Prompt},
+            ask::{Ask as _, Key, Peek, Prefill, Prompt},
             error::{Error, Result},
             session::Session,
         },
@@ -463,8 +453,6 @@ mod tests {
 
     #[tokio::test]
     async fn until_hands_the_attempt_the_mapped_answer() -> Result<()> {
-        use crate::core::ask::Ask as _;
-
         struct Secret(String);
 
         let keys = chars("bad")
@@ -517,6 +505,22 @@ mod tests {
         let ui = live(chars(&typed).chain([Key::Enter]));
         let secret = ui.ask(password("Pass").secret())?;
         assert_eq!(secret.expose_secret(), typed);
+        Ok(())
+    }
+
+    #[cfg(feature = "secrecy")]
+    #[test]
+    fn secret_follows_validate_and_given() -> Result<()> {
+        use secrecy::ExposeSecret as _;
+
+        let ui = live(chars("hunter2").chain([Key::Enter]));
+        let checked = password("Pass")
+            .validate(|_: &str| Ok::<(), String>(()))
+            .secret();
+        assert_eq!(ui.ask(checked)?.expose_secret(), "hunter2");
+        let ui = live([]);
+        let given = password("Pass").given(Some(Zeroizing::new("given".to_owned())));
+        assert_eq!(ui.ask(given.secret())?.expose_secret(), "given");
         Ok(())
     }
 

@@ -722,6 +722,20 @@ pub trait Ask: Sized {
         Map { inner: self, f }
     }
 
+    /// Answers a [`secrecy::SecretString`] when the answer is the password
+    /// text.
+    #[cfg(feature = "secrecy")]
+    #[must_use]
+    fn secret(self) -> Map<Self, fn(Zeroizing<String>) -> secrecy::SecretString>
+    where
+        Self: Ask<Output = Zeroizing<String>>,
+    {
+        // Copied to an exact-size box: moving the 256-byte buffer would shrink
+        // it by realloc and leave the old block unwiped; `text` is wiped on
+        // drop.
+        self.map(|text| secrecy::SecretString::from(text.as_str()))
+    }
+
     /// Ends the question from outside when `abort` fires, with
     /// [`Error::Aborted`]; an `abort` that fired before the question started
     /// ends it at once.
