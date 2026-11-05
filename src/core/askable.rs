@@ -405,7 +405,8 @@ impl<E: Choices> Answer for Vec<E> {
 
 /// The question of an `Option<E>` field: the variants and a last option,
 /// labelled [`Messages::skip`](crate::render::messages::Messages::skip), that
-/// answers `None`. Under `Defaults::Take` it takes that last option.
+/// answers `None`, in parentheses while a variant has that label. Under
+/// `Defaults::Take` it takes that last option.
 #[derive(Debug)]
 #[doc(hidden)]
 pub struct Skippable<E> {
@@ -434,7 +435,15 @@ impl<E: Choices> Ask for Skippable<E> {
     type Output = Option<E>;
 
     fn run<Term: Terminal>(self, session: &Session<Term>) -> Result<Option<E>> {
-        let skip = session.skin().messages().skip.to_string();
+        let taken: Vec<String> = Choice::split(E::choices())
+            .0
+            .iter()
+            .map(|variant| E::label(variant).to_lowercase())
+            .collect();
+        let mut skip = session.skin().messages().skip.to_string();
+        while taken.contains(&skip.to_lowercase()) {
+            skip = format!("({skip})");
+        }
         let choices = E::choices();
         let last = choices.len();
         select(self.message)

@@ -499,6 +499,26 @@ fn the_skip_row_is_a_message_and_not_a_variant() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn a_variant_labelled_skip_does_not_share_a_name_with_the_skip_row() -> Result<()> {
+    let ui = session([Key::Down, Key::Down, Key::Enter]);
+    assert_eq!(ui.ask(Pipeline::form())?, Pipeline { step: None });
+    let shown = screen(&ui.terminal().written());
+    assert!(shown.contains("(Skip)"), "{shown}");
+    let line = |text: &'static str| {
+        let term = Script::new(TerminalKind::Dumb, [], [text]);
+        Session::new(term, Settings::new(ColorChoice::Plain)).ask(Pipeline::form())
+    };
+    assert_eq!(
+        line("skip")?,
+        Pipeline {
+            step: Some(Step::Skip)
+        }
+    );
+    assert_eq!(line("(skip)")?, Pipeline { step: None });
+    Ok(())
+}
+
 /// Names the user module may have in scope must not change the expansion.
 mod hygiene {
 
