@@ -121,6 +121,8 @@ settings! {
         not_an_option: Cow<'static, str> => Cow<'static, str>,
         /// Why a given line is refused: it names no answer.
         not_an_answer: Cow<'static, str> => Cow<'static, str>,
+        /// Why a typed line is refused by a yes or no question: it is neither.
+        not_yes_or_no: Cow<'static, str> => Cow<'static, str>,
         /// Why a typed line is refused: it names an option that is disabled.
         option_disabled: Cow<'static, str> => Cow<'static, str>,
         /// The error of a Ctrl-C.
@@ -260,6 +262,7 @@ impl Messages {
             number_at_most,
             not_an_option: Cow::Borrowed("not one of the options"),
             not_an_answer: Cow::Borrowed("not an answer"),
+            not_yes_or_no: Cow::Borrowed("Type y or n."),
             option_disabled: Cow::Borrowed("That option is disabled."),
             error_interrupted: Cow::Borrowed("interrupted"),
             error_cancelled: Cow::Borrowed("cancelled"),

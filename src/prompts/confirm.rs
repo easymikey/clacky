@@ -280,7 +280,7 @@ impl Prompt for Confirm {
 
     fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
         (!line.trim().is_empty() && self.answer(line, messages).is_none())
-            .then_some(Refusal::NoOption)
+            .then(|| Refusal::Said(messages.not_yes_or_no.to_string()))
     }
 }
 
@@ -655,8 +655,9 @@ mod tests {
             .messages(german());
         assert!(ui.ask(confirm("Go?").default(Reply::No))?);
         let written = ui.terminal().written();
+        assert!(written.contains("Type y or n."), "{written:?}");
         assert!(
-            written.contains(&*Messages::english().pick_an_option),
+            !written.contains(&*Messages::english().pick_an_option),
             "{written:?}"
         );
         Ok(())
