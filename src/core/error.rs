@@ -16,7 +16,7 @@ pub enum Error {
     /// leaves it an error: a [`Stop`](crate::terminal::abort::Stop) was called
     /// or a timeout ran out.
     Aborted,
-    /// The input ended before `question` was answered.
+    /// The input gave no answer to `question`.
     NoInput {
         /// The label of the question.
         question: String,
@@ -111,7 +111,7 @@ mod tests {
     #[case::aborted(Error::Aborted, "aborted")]
     #[case::no_input(
         Error::NoInput { question: "Email".to_owned() },
-        "no input: stdin ended before Email was given"
+        "no input: no answer to Email from the input"
     )]
     #[case::no_choices(Error::NoChoices, "nothing to choose from")]
     #[case::no_default(

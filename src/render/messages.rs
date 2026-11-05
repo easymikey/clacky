@@ -131,8 +131,7 @@ settings! {
         error_cancelled: Cow<'static, str> => Cow<'static, str>,
         /// The error of a question ended from outside (a stop or a timeout).
         error_aborted: Cow<'static, str> => Cow<'static, str>,
-        /// The error of input that ended before an answer; given the question's
-        /// label.
+        /// The error of input that gave no answer; given the question's label.
         error_no_input: fn(&str) -> String,
         /// The error of a choice prompt without options.
         error_no_choices: Cow<'static, str> => Cow<'static, str>,
@@ -188,7 +187,7 @@ fn number_at_most(max: &str) -> String {
 }
 
 fn error_no_input(question: &str) -> String {
-    format!("no input: stdin ended before {question} was given")
+    format!("no input: no answer to {question} from the input")
 }
 
 fn error_no_default(question: &str) -> String {

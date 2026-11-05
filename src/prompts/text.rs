@@ -470,7 +470,7 @@ mod tests {
     #[case::esc(Script::new(TerminalKind::Live, [Key::Cancel], []), "cancelled")]
     #[case::ctrl_d(Script::new(TerminalKind::Live, [Key::EndOfInput], []), "cancelled")]
     #[case::blind_end(Script::new(TerminalKind::Dumb, [], []), "cancelled")]
-    #[case::stdin_ended(Script::new(TerminalKind::Redirected, [], []), "no input: stdin ended")]
+    #[case::stdin_ended(Script::new(TerminalKind::Redirected, [], []), "no input: no answer")]
     fn a_stopped_question_says_why(#[case] script: Script, #[case] message: &str) {
         let err = bare(script).ask(text("Email")).err();
         let said = err.as_ref().map(ToString::to_string).unwrap_or_default();
