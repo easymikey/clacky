@@ -19,8 +19,9 @@
 //!
 //! Under [`Defaults::Take`](crate::core::settings::Defaults::Take) a field with
 //! no `default` fails with
-//! [`Error::NoDefault`](crate::core::error::Error::NoDefault), except an enum,
-//! an `Option`, and an `optional` `Vec`.
+//! [`Error::NoDefault`](crate::core::error::Error::NoDefault), except a `bool`
+//! (Yes), an enum (the first variant), an `Option` (`None`) and an `optional`
+//! `Vec` (empty).
 //!
 //! # Field options
 //!
