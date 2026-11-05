@@ -396,16 +396,19 @@ impl<T: Terminal> Session<T> {
     /// # Errors
     /// The terminal failed, or the person stopped the question. When the tries
     /// run out, the last attempt error is in the inner `Result`.
-    pub async fn ask_until<Q: Ask, A, F>(
+    pub fn ask_until<Q: Ask, A, F>(
         &self,
         make: impl Fn() -> Q,
         label: &str,
         attempt: impl AsyncFn(&Q::Output) -> std::result::Result<A, F>,
         retry: impl Fn(&F) -> Option<String>,
         tries: NonZeroU8,
-    ) -> Result<std::result::Result<A, F>> {
-        self.try_until(&make, label, &attempt, &retry, (tries.get(), None))
-            .await
+    ) -> impl Future<Output = Result<std::result::Result<A, F>>> {
+        // Boxed, so the caller's future stays small and shallow.
+        Box::pin(async move {
+            self.try_until(&make, label, &attempt, &retry, (tries.get(), None))
+                .await
+        })
     }
 
     async fn try_until<Q: Ask, A, F>(
@@ -878,7 +881,16 @@ impl<T: Terminal> Session<T> {
     ///
     /// # Errors
     /// The terminal failed, or Ctrl-C ended the wait.
-    pub async fn wait<W>(
+    pub fn wait<W>(
+        &self,
+        label: &str,
+        work: impl Future<Output = W>,
+    ) -> impl Future<Output = Result<W>> {
+        // Boxed, so the caller's future stays small and shallow.
+        Box::pin(self.waiting(label, work))
+    }
+
+    async fn waiting<W>(
         &self,
         label: &str,
         work: impl Future<Output = W>,
@@ -1646,6 +1658,35 @@ mod tests {
         let first = first.map(String::as_str).unwrap_or_default();
         assert!(!first.contains('…'), "{first}");
         assert_eq!(first.matches('x').count(), 100, "{first}");
+    }
+
+    /// A caller's future holds these, so they must not grow with the work.
+    #[test]
+    fn wait_and_ask_until_futures_stay_small_whatever_the_work() -> Result<()> {
+        use std::mem::size_of_val;
+
+        fn is_send<T: Send>(_: &T) {}
+
+        async fn big() -> u8 {
+            let buf = [1_u8; 4096];
+            std::future::pending::<()>().await;
+            buf[3]
+        }
+
+        let ui = Session::detect()?;
+        let waiting = ui.wait("Checking", big());
+        let asking = ui.ask_until(
+            || ask_text("Code"),
+            "Checking",
+            async |_: &String| Ok::<u8, &str>(big().await),
+            |_| None,
+            NonZeroU8::MIN,
+        );
+        is_send(&waiting);
+        is_send(&asking);
+        assert!(size_of_val(&waiting) <= 64, "{}", size_of_val(&waiting));
+        assert!(size_of_val(&asking) <= 64, "{}", size_of_val(&asking));
+        Ok(())
     }
 
     async fn tried_once<Q: Ask<Output = String>>(
