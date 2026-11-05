@@ -612,14 +612,27 @@ impl Skin {
     #[must_use]
     pub fn code_on(&self, text: &str, rest: impl Fn(&str) -> String) -> String {
         match self.color {
-            ColorChoice::Colored => text
-                .split('`')
-                .enumerate()
-                .map(|(at, part)| match at % 2 {
-                    1 => self.paint(self.theme.code, part),
-                    _ => rest(part),
-                })
-                .collect(),
+            ColorChoice::Colored => {
+                // A backtick without a partner stays in the text.
+                let (paired, loose) = match text.rfind('`') {
+                    Some(last) if text.matches('`').count() % 2 == 1 => {
+                        text.split_at(last)
+                    }
+                    _ => (text, ""),
+                };
+                let mut shown: String = paired
+                    .split('`')
+                    .enumerate()
+                    .map(|(at, part)| match at % 2 {
+                        1 => self.paint(self.theme.code, part),
+                        _ => rest(part),
+                    })
+                    .collect();
+                if !loose.is_empty() {
+                    shown.push_str(&rest(loose));
+                }
+                shown
+            }
             ColorChoice::Plain => rest(text),
         }
     }
@@ -747,6 +760,14 @@ mod tests {
         let skin = Skin::new(ColorChoice::Plain).with_theme(Theme::mono());
         assert_eq!(skin.paint(skin.theme().active, "x"), "x");
         assert_eq!(skin.code("run `ls`"), "run `ls`");
+    }
+
+    #[rstest]
+    #[case::alone("can't contain `", "can't contain `")]
+    #[case::unpaired_after_pair("`a` and `b", "\x1b[36ma\x1b[0m and `b")]
+    #[case::three("`a` `", "\x1b[36ma\x1b[0m `")]
+    fn an_unpaired_backtick_prints_as_is(#[case] text: &str, #[case] shown: &str) {
+        assert_eq!(Skin::new(ColorChoice::Colored).code(text), shown);
     }
 
     #[test]
