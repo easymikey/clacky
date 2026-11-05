@@ -1,7 +1,6 @@
 //! `tasks`: titled steps run one after another, each with a spinner.
 
-use std::fmt::Display;
-#[cfg(feature = "tokio")] use std::pin::Pin;
+use std::{fmt::Display, pin::Pin};
 
 use crate::{
     core::{error::Error, session::Session},
@@ -113,7 +112,6 @@ fn finish<T: Terminal, E: From<Error> + Display>(
     }
 }
 
-#[cfg(feature = "tokio")]
 type Step<'s, E> = Pin<Box<dyn Future<Output = Outcome<E>> + 's>>;
 
 /// Futures run in order, each under a spinner that ticks on the clock.
@@ -129,14 +127,12 @@ type Step<'s, E> = Pin<Box<dyn Future<Output = Outcome<E>> + 's>>;
 ///     .await?;
 /// # Ok(()) }
 /// ```
-#[cfg(feature = "tokio")]
 #[must_use]
 pub struct AsyncTasks<'s, T: Terminal, E = Error> {
     session: &'s Session<T>,
     items: Vec<(String, Step<'s, E>)>,
 }
 
-#[cfg(feature = "tokio")]
 impl<T: Terminal, E> std::fmt::Debug for AsyncTasks<'_, T, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AsyncTasks")
@@ -152,7 +148,6 @@ impl<T: Terminal, E> std::fmt::Debug for AsyncTasks<'_, T, E> {
     }
 }
 
-#[cfg(feature = "tokio")]
 impl<T: Terminal> Session<T> {
     /// An empty list of tasks that are futures and fail with [`Error`].
     pub fn async_tasks(&self) -> AsyncTasks<'_, T> {
@@ -171,7 +166,6 @@ impl<T: Terminal> Session<T> {
     }
 }
 
-#[cfg(feature = "tokio")]
 impl<'s, T: Terminal, E: From<Error> + Display> AsyncTasks<'s, T, E> {
     /// Adds a task under `title`.
     pub fn task(
@@ -334,28 +328,21 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
-    #[tokio::test(start_paused = true)]
-    async fn futures_run_in_order_under_a_ticking_spinner() -> Result<()> {
-        use crate::output::spinner::DELAY;
-
+    #[tokio::test]
+    async fn futures_run_in_order_under_a_spinner() -> Result<()> {
         let session = session(TerminalKind::Live);
         session
             .async_tasks()
-            .task("Fetching", async {
-                tokio::time::sleep(DELAY + DELAY / 2).await;
-                Ok(Some("Fetched".to_owned()))
-            })
+            .task("Fetching", async { Ok(Some("Fetched".to_owned())) })
             .task("Linking", async { Ok(None) })
             .run()
             .await?;
         let raw = session.terminal().written();
-        assert!(raw.contains("◐  Fetching"), "{raw:?}");
+        assert!(raw.contains("◒  Fetching"), "{raw:?}");
         assert_eq!(screen(&raw), "│\n◇  Fetched\n│\n◇  Linking");
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn a_failed_future_ends_red() {
         let session = session(TerminalKind::Live);
@@ -371,7 +358,6 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn a_future_fails_with_its_own_error() {
         let session = session(TerminalKind::Live);

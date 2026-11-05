@@ -27,14 +27,13 @@
 //!
 //! | Feature | Default | What it adds |
 //! |---|---|---|
-//! | `tokio` | yes | `Session::ask_until`, `wait`, `AsyncTasks`, `Spinner::during` |
 //! | `derive` | no | `#[derive(Choices)]`, `#[derive(Form)]` |
 //! | `fake` | no | `clacky::fake`, the scripted terminal and screen emulator |
 //! | `secrecy` | no | `password(..).secret()`, a `secrecy::SecretString` answer |
 #![deny(missing_docs)]
 
 /// The README, compiled: every code block in it is a doc test.
-#[cfg(all(doctest, feature = "fake", feature = "derive", feature = "tokio"))]
+#[cfg(all(doctest, feature = "fake", feature = "derive"))]
 #[doc = include_str!("../README.md")]
 struct ReadmeDoctests;
 
@@ -81,7 +80,6 @@ pub use core::{
 };
 
 #[cfg(feature = "derive")] pub use clacky_derive::{Choices, Form};
-#[cfg(feature = "tokio")] pub use output::tasks::AsyncTasks;
 pub use output::{
     LogEntry,
     boxed::{Align, BoxWidth, Boxed, Corners},
@@ -89,7 +87,7 @@ pub use output::{
     spinner::{Indicator, Spinner},
     stream::LogStream,
     task_log::{TaskLog, TaskLogGroup},
-    tasks::Tasks,
+    tasks::{AsyncTasks, Tasks},
 };
 pub use prompts::{
     autocomplete::{

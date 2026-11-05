@@ -3,6 +3,7 @@
 use std::io::{self, IsTerminal as _, Write as _};
 
 use crate::{
+    core::clock::Ticker,
     terminal::{
         abort::Abort,
         detect::{ColorHint, StreamKind, TerminalType},
@@ -18,7 +19,6 @@ pub mod signals;
 pub mod tty;
 #[cfg(windows)] mod windows;
 
-#[cfg(feature = "tokio")]
 const INTERRUPT_POLL: std::time::Duration = std::time::Duration::from_millis(50);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -109,7 +109,6 @@ pub trait Terminal {
 
     /// Resolves on the next Ctrl-C after the call; keep a
     /// [`catch_interrupts`](Self::catch_interrupts) guard while awaiting it.
-    #[cfg(feature = "tokio")]
     fn interrupt(&self) -> impl Future<Output = ()>;
 }
 
@@ -230,12 +229,12 @@ impl Terminal for Console {
         tty::discard_typeahead();
     }
 
-    #[cfg(feature = "tokio")]
     fn interrupt(&self) -> impl Future<Output = ()> {
         let seen = signals::interrupts();
         async move {
+            let poll = Ticker::every(INTERRUPT_POLL);
             while signals::interrupts() == seen {
-                tokio::time::sleep(INTERRUPT_POLL).await;
+                poll.tick().await;
             }
         }
     }

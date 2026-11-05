@@ -317,8 +317,7 @@ impl Field {
 mod tests {
     #![expect(clippy::panic_in_result_fn, reason = "assert is the point of a test")]
 
-    use std::cell::RefCell;
-    #[cfg(feature = "tokio")] use std::num::NonZeroU8;
+    use std::{cell::RefCell, num::NonZeroU8};
 
     use rstest::rstest;
 
@@ -340,7 +339,6 @@ mod tests {
     };
 
     const NOT_EMAIL: &str = "enter an address like you@example.com";
-    #[cfg(feature = "tokio")]
     const WRONG_CODE: &str =
         "that code did not match - check the latest email and type it again";
 
@@ -640,7 +638,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[rstest]
     #[case::second_try_takes(Script::new(TerminalKind::Live, chars("000000").chain([Key::Enter]).chain(chars("123456")).chain([Key::Enter]), []), 3, Ok(()), 1)]
     #[case::tries_run_out(Script::new(TerminalKind::Live, chars("000000").chain([Key::Enter]).chain(chars("111111")).chain([Key::Enter]), []), 2, Err(WRONG_CODE), 1)]
@@ -679,7 +676,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn until_waits_under_the_label_it_is_given() -> Result<()> {
         let ui = live(chars("1").chain([Key::Enter]));

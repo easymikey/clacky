@@ -71,7 +71,7 @@ msrv:
 no-default:
     cargo check --no-default-features --locked
     cargo bin cargo-nextest run --no-default-features --locked
-    ! cargo tree --no-default-features -e normal | grep -q tokio
+    ! cargo tree --all-features -e normal | grep -q tokio
 
 package:
     cargo package --workspace --locked

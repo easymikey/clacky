@@ -21,7 +21,6 @@ workspace = true
 [dependencies]
 clacky-derive = { version = "=0.1.0", path = "clacky-derive", optional = true }
 unicode-width = { version = "0.2", default-features = false }
-tokio = { version = "1", optional = true, features = ["macros", "time"] }
 unicode-segmentation = "1"
 zeroize = "1"
 secrecy = { version = "0.10", optional = true }
@@ -35,18 +34,13 @@ libc = "0.2"
 [dev-dependencies]
 rstest = { version = "0.28", default-features = false }
 proptest = { version = "1.11", default-features = false, features = ["std", "bit-set"] }
-tokio = { version = "1", features = ["rt", "macros", "time", "test-util"] }
+tokio = { version = "1", features = ["rt", "macros", "time"] }
 
 [features]
-default = ["tokio"]
+default = []
 derive = ["dep:clacky-derive"]
 fake = []
 secrecy = ["dep:secrecy"]
-tokio = ["dep:tokio"]
-
-[[example]]
-name = "login"
-required-features = ["tokio"]
 
 [[example]]
 name = "derive"

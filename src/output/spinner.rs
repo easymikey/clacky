@@ -7,6 +7,7 @@ use std::{
 
 use crate::{
     core::{
+        clock::{Ticker, race},
         error::{Error, Result},
         session::Session,
         settings::OutputMode,
@@ -330,17 +331,20 @@ impl<'s, T: Terminal> Spinner<'s, T> {
     /// to be ended by the caller.
     /// # Errors
     /// The terminal failed, or Ctrl-C came before `work` was done.
-    #[cfg(feature = "tokio")]
     pub async fn during<W>(&mut self, work: impl Future<Output = W>) -> Result<W> {
+        self.during_ticked(work, Ticker::every(DELAY)).await
+    }
+
+    async fn during_ticked<W>(
+        &mut self,
+        work: impl Future<Output = W>,
+        ticker: Ticker,
+    ) -> Result<W> {
         let mut work = std::pin::pin!(work);
-        let mut clock =
-            tokio::time::interval_at(tokio::time::Instant::now() + DELAY, DELAY);
-        clock.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
-            tokio::select! {
-                biased;
-                out = &mut work => return Ok(out),
-                _ = clock.tick() => self.tick()?,
+            match race(&mut work, ticker.tick()).await {
+                Some(out) => return Ok(out),
+                None => self.tick()?,
             }
         }
     }
@@ -349,7 +353,6 @@ impl<'s, T: Terminal> Spinner<'s, T> {
     /// draws lines leaves them.
     /// # Errors
     /// The terminal failed.
-    #[cfg(feature = "tokio")]
     pub(crate) fn wipe(&mut self) -> Result<()> {
         self.end(Ending::Wipe, "")
     }
@@ -662,7 +665,6 @@ mod tests {
 
         fn discard_typeahead(&self) {}
 
-        #[cfg(feature = "tokio")]
         fn interrupt(&self) -> impl Future<Output = ()> {
             std::future::pending()
         }
@@ -781,7 +783,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[test]
     fn a_wiped_spinner_leaves_no_trace() -> Result<()> {
         let session = session(TerminalKind::Live);
@@ -804,18 +805,43 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
-    #[tokio::test(start_paused = true)]
-    async fn during_ticks_on_the_clock_until_the_work_is_done() -> Result<()> {
+    #[test]
+    fn during_ticks_on_the_clock_until_the_work_is_done() -> Result<()> {
+        use std::{
+            future::{Future as _, poll_fn},
+            pin::pin,
+            task::{Context, Poll, Waker},
+        };
+
+        use crate::core::clock::Ticker;
+
         let session = session(TerminalKind::Live);
         let mut spinner = session.spinner();
         spinner.start("Waiting")?;
-        spinner
-            .during(tokio::time::sleep(
-                crate::output::spinner::DELAY.saturating_mul(2)
-                    + crate::output::spinner::DELAY / 2,
-            ))
-            .await?;
+        let (ticker, pulse) = Ticker::manual();
+        let done = Cell::new(false);
+        let work = poll_fn(|_| {
+            if done.get() {
+                Poll::Ready(())
+            } else {
+                Poll::Pending
+            }
+        });
+        let finished = {
+            let mut during = pin!(spinner.during_ticked(work, ticker));
+            let mut cx = Context::from_waker(Waker::noop());
+            assert!(during.as_mut().poll(&mut cx).is_pending());
+            for _ in 0..2 {
+                pulse.fire();
+                assert!(during.as_mut().poll(&mut cx).is_pending());
+            }
+            done.set(true);
+            during.as_mut().poll(&mut cx)
+        };
+        let Poll::Ready(finished) = finished else {
+            return Err(Error::Cancelled);
+        };
+        finished?;
         spinner.stop("Waited")?;
         let raw = session.terminal().written();
         assert!(

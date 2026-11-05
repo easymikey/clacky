@@ -171,8 +171,7 @@ impl Prefill for Password {
 mod tests {
     #![expect(clippy::panic_in_result_fn, reason = "assert is the point of a test")]
 
-    use std::cell::RefCell;
-    #[cfg(feature = "tokio")] use std::num::NonZeroU8;
+    use std::{cell::RefCell, num::NonZeroU8};
 
     use rstest::rstest;
     use zeroize::Zeroizing;
@@ -431,7 +430,6 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn until_asks_again_after_a_wrong_secret_starting_empty() -> Result<()> {
         let keys = chars("bad")
@@ -461,7 +459,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn until_hands_the_attempt_the_mapped_answer() -> Result<()> {
         use crate::core::ask::Ask as _;
@@ -509,7 +506,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(all(feature = "secrecy", feature = "tokio"))]
+    #[cfg(feature = "secrecy")]
     #[tokio::test]
     async fn secret_works_with_ask_until() -> Result<()> {
         use secrecy::ExposeSecret as _;

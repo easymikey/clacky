@@ -1,10 +1,10 @@
 //! The [`Session`]: one terminal and one `Settings`, through which prompts and
 //! log lines are drawn on the rail.
 
-#[cfg(feature = "tokio")] use std::num::NonZeroU8;
 use std::{
     fmt::Write as _,
     mem,
+    num::NonZeroU8,
     ops::ControlFlow,
     sync::{
         Mutex,
@@ -18,6 +18,7 @@ use zeroize::Zeroizing;
 use crate::{
     core::{
         ask::{self, Ask, Frame, Next, Phase, Prefill, Redirected, WhenSingle},
+        clock::race,
         error::{Error, Result},
         keys::KeyMap,
         settings::{Defaults, OutputMode, Settings},
@@ -390,7 +391,6 @@ impl<T: Terminal> Session<T> {
     /// # Errors
     /// The terminal failed, or the person stopped the question. When the tries
     /// run out, the last attempt error is in the inner `Result`.
-    #[cfg(feature = "tokio")]
     pub async fn ask_until<Q: Ask, A, F>(
         &self,
         make: impl Fn() -> Q,
@@ -403,7 +403,6 @@ impl<T: Terminal> Session<T> {
             .await
     }
 
-    #[cfg(feature = "tokio")]
     async fn try_until<Q: Ask, A, F>(
         &self,
         make: &impl Fn() -> Q,
@@ -865,7 +864,6 @@ impl<T: Terminal> Session<T> {
     ///
     /// # Errors
     /// The terminal failed, or Ctrl-C ended the wait.
-    #[cfg(feature = "tokio")]
     pub async fn wait<W>(
         &self,
         label: &str,
@@ -878,23 +876,16 @@ impl<T: Terminal> Session<T> {
             TerminalKind::Live => {
                 let mut spinner = self.spinner();
                 spinner.start(label)?;
-                let out = tokio::select! {
-                    biased;
-                    out = spinner.during(work) => out,
-                    () = interrupt => {
-                        spinner.cancel(self.skin().messages().cancelled.to_string())?;
-                        Err(Error::Interrupted)
-                    }
-                }?;
+                let Some(out) = race(spinner.during(work), interrupt).await else {
+                    spinner.cancel(self.skin().messages().cancelled.to_string())?;
+                    return Err(Error::Interrupted);
+                };
+                let out = out?;
                 spinner.wipe()?;
                 Ok(out)
             }
             TerminalKind::Dumb | TerminalKind::Redirected => {
-                tokio::select! {
-                    biased;
-                    out = work => Ok(out),
-                    () = interrupt => Err(Error::Interrupted),
-                }
+                race(work, interrupt).await.ok_or(Error::Interrupted)
             }
         }
     }
@@ -980,7 +971,6 @@ mod tests {
         session.intro("acme login").map(|()| session)
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn waiting_line_is_drawn_and_removed_only_when_live() -> Result<()> {
         let live = form(Script::new(TerminalKind::Live, [], []))?;
@@ -994,7 +984,44 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
+    #[test]
+    fn wait_runs_on_an_executor_that_is_not_tokio() -> Result<()> {
+        use std::{
+            future::poll_fn,
+            sync::{Arc, Mutex, PoisonError},
+            task::{Poll, Waker},
+            thread,
+        };
+
+        use crate::core::clock::block_on;
+
+        let live = form(Script::new(TerminalKind::Live, [], []))?;
+        let state: Arc<Mutex<(bool, Option<Waker>)>> = Arc::default();
+        let finisher = Arc::clone(&state);
+        let work = poll_fn(|cx| {
+            let mut state = state.lock().unwrap_or_else(PoisonError::into_inner);
+            if state.0 {
+                Poll::Ready(7)
+            } else {
+                state.1 = Some(cx.waker().clone());
+                Poll::Pending
+            }
+        });
+        let finishing = thread::spawn(move || {
+            thread::sleep(Duration::from_millis(10));
+            let mut done = finisher.lock().unwrap_or_else(PoisonError::into_inner);
+            done.0 = true;
+            done.1.take().into_iter().for_each(Waker::wake);
+        });
+        assert_eq!(block_on(live.wait("Checking", work))?, 7);
+        assert!(finishing.join().is_ok());
+        let pressed = form(Script::new(TerminalKind::Live, [], []).pressing_ctrl_c())?;
+        let err =
+            block_on(pressed.wait("Signing in", std::future::pending::<()>())).err();
+        assert!(matches!(err, Some(Error::Interrupted)), "{err:?}");
+        Ok(())
+    }
+
     #[tokio::test]
     async fn ctrl_c_during_a_wait_closes_the_form() -> Result<()> {
         let form = form(Script::new(TerminalKind::Live, [], []).pressing_ctrl_c())?;
@@ -1051,7 +1078,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn finished_work_wins_over_ctrl_c() -> Result<()> {
         let form = form(Script::new(TerminalKind::Live, [], []).pressing_ctrl_c())?;
@@ -1282,7 +1308,6 @@ mod tests {
         assert_eq!(ui.terminal().written(), "");
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn a_wait_is_quiet_only_while_it_runs() -> Result<()> {
         let form = form(Script::new(TerminalKind::Live, [], []))?;
@@ -1491,7 +1516,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn accessible_wait_prints_its_line_once() -> Result<()> {
         let session = bare(Script::new(TerminalKind::Live, [], []))

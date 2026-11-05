@@ -311,7 +311,6 @@ impl Terminal for Script {
         self.discarded.set(self.discarded.get() + 1);
     }
 
-    #[cfg(feature = "tokio")]
     fn interrupt(&self) -> impl Future<Output = ()> {
         let never = (self.ctrl_c == CtrlC::Never).then(std::future::pending::<()>);
         async move {
