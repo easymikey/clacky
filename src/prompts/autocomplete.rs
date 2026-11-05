@@ -716,6 +716,7 @@ impl<V> Search<'_, V> {
         let count = found.shown.len();
         let filtered = !found.query.text().is_empty() && count > 0;
         let search = &*skin.messages().search;
+        let lead = measure_text_width(search);
         let suffix = if filtered {
             let many = (skin.messages().matches)(count);
             skin.paint(skin.theme().hint, &format!(" ({many})"))
@@ -723,7 +724,7 @@ impl<V> Search<'_, V> {
             String::new()
         };
         let room = room.map(|room| {
-            room.saturating_sub(search.len() + measure_text_width(&suffix))
+            room.saturating_sub(lead + measure_text_width(&suffix))
                 .max(1)
         });
         let rows = caret::rows(
@@ -736,13 +737,13 @@ impl<V> Search<'_, V> {
         rows.into_iter()
             .zip(0..)
             .map(|(row, number)| {
-                let lead = if number == 0 {
+                let label = if number == 0 {
                     search.to_owned()
                 } else {
-                    " ".repeat(search.len())
+                    " ".repeat(lead)
                 };
                 let tail = if number == last { suffix.as_str() } else { "" };
-                format!("{bar}  {lead}{row}{tail}")
+                format!("{bar}  {label}{row}{tail}")
             })
             .collect()
     }
@@ -1150,7 +1151,7 @@ mod tests {
             testing::{self, after, bare, keys, rendered as rendered_by},
         },
         prompts::choice::Choice,
-        render::{color::ColorChoice, messages::Messages},
+        render::{color::ColorChoice, messages::Messages, style::Skin},
         terminal::TerminalKind,
     };
 
@@ -1251,6 +1252,25 @@ mod tests {
             .simulate(keys(spec))?;
         assert_eq!(found.0, expected);
         Ok(())
+    }
+
+    #[test]
+    fn the_search_label_is_measured_in_columns() {
+        let skin = Skin::new(ColorChoice::Plain)
+            .with_messages(Messages::english().search("Поиск: "));
+        let prompt = one();
+        let mut frame = Frame::skinned(skin, Some(24));
+        if let Some(state) = after(&prompt, keys("zzzzzzzzzzzzzzzzzzzzzz")) {
+            prompt.view(&state, Phase::Active, &mut frame);
+        }
+        assert_eq!(
+            frame.rows().first().map(String::as_str),
+            Some("│  Поиск: zzzzzzzzzzzzz")
+        );
+        assert_eq!(
+            frame.rows().get(1).map(String::as_str),
+            Some("│         zzzzzzzzz▏")
+        );
     }
 
     #[test]
