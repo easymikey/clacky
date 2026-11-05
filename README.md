@@ -40,7 +40,7 @@ clacky is inspired by [clack](https://github.com/bombshell-dev/clack) 🍦: the 
 - **Terminals without a keyboard**: `TERM=dumb` and piped input have their own path.
 - **Abort and timeout**: `.timeout(duration)` and `Abort` end a question and restore the terminal.
 - **Scripted tests**: `Prompt::simulate` and `fake::Script` run a form without a terminal.
-- **Small**: 4 dependencies without `tokio`, about 410 KiB for a three question form.
+- **Small**: 4 dependencies, async included, about 410 KiB for a three question form.
 
 ## Install
 
@@ -50,7 +50,7 @@ cargo add clacky --features derive      # #[derive(Choices, Form)]
 cargo add clacky --dev --features fake  # the scripted terminal, in tests
 ```
 
-`tokio` is a default feature (async tasks and `ask_until`); `--no-default-features` drops it. The minimum Rust version is 1.85.
+The async API (`ask_until`, `wait`, `async_tasks`) works on any executor. The minimum Rust version is 1.85.
 
 ## Quick start
 

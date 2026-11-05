@@ -66,7 +66,7 @@ tests/         derive tests (features `derive` and `fake`)
 - Scopes: `derive` for `clacky-derive`, a module name for the rest.
 - The MSRV is 1.85 (`msrv` in `justfile`). Install it once with `rustup toolchain install "$(cargo bin just --evaluate msrv)" --profile minimal`.
 - Groups: `lint` (`fmt-check`, `spell`, `clippy`), `check` (`test`, `doctest`, `doc`), `deps` (`deny`, `machete`), `compat` (`clippy-no-default`, `msrv`, `no-default`, `package`, `examples`).
-- `no-default` builds and tests without default features and fails if `tokio` is in the normal dependency tree.
+- `no-default` builds and tests without default features and fails if `tokio` is in the normal dependency tree with all features.
 - CI runs `default` on Linux, and `clippy clippy-no-default check examples` on macOS and Windows.
 - `size` (see `docs/size.md`) and `bench` are local helpers outside `default`.
 - Tags are `clacky-vX.Y.Z` and `clacky-derive-vX.Y.Z`. `clacky` pins `clacky-derive` with `=`, so a derive release bumps both crates.

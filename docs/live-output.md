@@ -28,4 +28,4 @@ ui.tasks()
 # }
 ```
 
-With the `tokio` feature, `ui.async_tasks()`, `Spinner::during(future)` and `ui.wait(label, future)` run futures under the same spinner.
+`ui.async_tasks()`, `Spinner::during(future)` and `ui.wait(label, future)` run futures under the same spinner, on any executor, tokio or your own.
