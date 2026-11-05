@@ -187,7 +187,7 @@ fn number_at_most(max: &str) -> String {
 }
 
 fn error_no_input(question: &str) -> String {
-    format!("no input: no answer to {question} from the input")
+    format!("no input: no answer to {question}")
 }
 
 fn error_no_default(question: &str) -> String {

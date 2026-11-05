@@ -111,7 +111,7 @@ mod tests {
     #[case::aborted(Error::Aborted, "aborted")]
     #[case::no_input(
         Error::NoInput { question: "Email".to_owned() },
-        "no input: no answer to Email from the input"
+        "no input: no answer to Email"
     )]
     #[case::no_choices(Error::NoChoices, "nothing to choose from")]
     #[case::no_default(
