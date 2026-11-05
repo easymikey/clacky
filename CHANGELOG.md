@@ -1,59 +1,53 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## Unreleased
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## 0.2.0 (2026-11-05)
 
-## [Unreleased]
-
-## [0.2.0](https://github.com/easymikey/clacky/compare/clacky-v0.1.0...clacky-v0.2.0) - 2026-11-05
+Breaking: the `tokio` feature is removed, so drop it from your `Cargo.toml` features; `ask_until`, `wait`, `async_tasks` and `Spinner::during` are always available and run on any executor. `Error::NoInput` is now `Error::NoInput { question }`, so match it as `NoInput { .. }` or read the question label from it.
 
 ### Added
-
-- [**breaking**] async api without tokio, on any runtime
-- *(error)* [**breaking**] name the question in NoInput
-- print raw text, password secret(), mapped answers in ask_until, bare intro titles
-
+- The async api works without tokio, on any runtime.
+- `Error::NoInput` carries the label of the question left unanswered, and its message names that question.
+- `Session::print` writes raw text between prompts.
+- `password(..).secret()` returns a `SecretString` (feature `secrecy`).
+- `ask_until` gives back the mapped answer.
+- An intro can be a bare title.
 ### Changed
-
-- *(askable)* one Fillable impl for Option<String> and Option<number>
+- One `Fillable` impl serves `Option<String>` and every `Option<number>`.
 
 ### Fixed
+- A skip row stays apart from a variant labelled skip.
+- An optional number is asked with the number prompt.
+- A cancelled date row keeps the session's placeholders.
+- The autocomplete search label is measured in columns.
+- An unpaired backtick prints as it is.
+- Terminal hyperlinks are measured and clipped by their text.
+- The no input text is shorter and says the input gave no answer, not that stdin ended.
+- A typed line that names no option asks again.
+- A prompt with one row keeps the option under the cursor on screen.
+- Confirm refuses a line that is neither yes nor no, with its own text.
+- A Windows console that reads no escapes gets lines drawn only when needed.
+- Ctrl-C puts the terminal back when it ends the program while the terminal is quiet.
+- `secret` is available after `validate`, `given` and other wrappers.
+- A password is copied to an exact-size box, so no unwiped block is freed.
+- The futures of `wait` and `ask_until` are boxed.
+- `ask_until` tries an answer nobody typed once.
+- A dropped running spinner ends as canceled.
+- A spinner counts only Ctrl-C presses made after it started.
+- The async `tasks` run future is `Send`.
 
-- *(askable)* keep the skip row apart from a variant labelled skip
-- *(askable)* ask an optional number with the number prompt
-- *(date)* keep the session's placeholders on a cancelled row
-- *(autocomplete)* measure the search label in columns
-- *(render)* print an unpaired backtick as it is
-- *(render)* measure and clip terminal hyperlinks by their text
-- *(error)* shorter no input text
-- *(error)* say the input gave no answer, not that stdin ended
-- *(prompts)* ask again when a typed line names no option
-- *(prompts)* keep the option under the cursor on screen with one row
-- *(confirm)* refuse a line that is neither yes nor no with its own text
-- *(terminal)* draw lines only when a Windows console reads no escapes
-- *(terminal)* put the terminal back when Ctrl-C ends the program while it is quiet
-- *(ask)* make secret available after validate, given and other wrappers
-- *(password)* copy the secret to an exact-size box so no unwiped block is freed
-- *(session)* box the futures of wait and ask_until
-- *(session)* try an answer nobody typed once in ask_until
-- *(spinner)* end a dropped running spinner as canceled
-- *(spinner)* count only Ctrl-C presses made after the spinner started
-- *(tasks)* make the async run future Send
+## 0.1.0 (2026-11-04)
 
-## [0.1.0](https://github.com/easymikey/clacky/releases/tag/clacky-v0.1.0) - 2026-11-04
+Breaking: output text takes `impl Display`, cancel carries no causes, confirm defaults to yes, and `Confirm::or_cancel` ends a form on No.
 
 ### Added
-
-- [**breaking**] output text takes impl Display, cancel without causes, confirm defaults to yes, or_cancel
-- *(derive)* Choices and Form derives
-- *(output)* log, note, box, spinner, progress, tasks, task log and stream
-- *(prompts)* text, password, confirm, number, date, path, select, multiselect, autocomplete
-- *(render)* theme, symbols, messages and drawing
-- *(terminal)* raw mode, signals, abort and line terminals
-- *(core)* session, prompts as values, keys and errors
+- `Choices` and `Form` derives.
+- Output: log, note, box, spinner, progress, tasks, task log and stream.
+- Prompts: text, password, confirm, number, date, path, select, multiselect and autocomplete.
+- Theme, symbols, messages and drawing.
+- Terminal raw mode, signals, abort and line terminals.
+- Session, prompts as values, keys and errors.
 
 ### Fixed
-
-- count spinners down without the deprecated fetch_update
+- Spinners count down without the deprecated `fetch_update`.
