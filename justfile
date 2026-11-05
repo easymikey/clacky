@@ -58,7 +58,7 @@ hooks:
 ship level execute="":
     cargo bin just default
     cargo bin cargo-semver-checks check-release --workspace --release-type {{ if level == "patch" { "patch" } else { "major" } }}
-    cargo bin cargo-release {{ level }} --workspace {{ if execute == "execute" { "--execute" } else { "" } }}
+    cargo bin cargo-release {{ level }} --workspace {{ if execute == "execute" { "--execute" } else { "--no-verify" } }}
 # Print the changelog section of a tag such as clacky-v0.2.0.
 release-notes tag:
     #!/usr/bin/env bash
