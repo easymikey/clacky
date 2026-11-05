@@ -1,0 +1,10 @@
+[default.extend-words]
+# Test data: typed prefixes and German date words.
+ba = "ba"
+caf = "caf"
+ein = "ein"
+als = "als"
+hel = "hel"
+thr = "thr"
+# Method name in src/prompts/autocomplete.rs.
+placeheld = "placeheld"
