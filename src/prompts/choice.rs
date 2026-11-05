@@ -303,7 +303,7 @@ pub(crate) fn scrolled<T>(
     row: impl Fn(usize, &T) -> String,
 ) -> Vec<String> {
     let start = cursor
-        .saturating_sub(rows.div_ceil(2))
+        .saturating_sub(rows / 2)
         .min(items.len().saturating_sub(rows));
     let end = start.saturating_add(rows).min(items.len());
     let more = |hidden: bool| {
@@ -487,5 +487,15 @@ mod tests {
         assert_eq!(super::seek(4, 6, 7, open), 3);
         assert_eq!(super::seek(2, 1, 7, |_| false), 2);
         assert_eq!(super::seek(0, 1, 0, open), 0);
+    }
+
+    #[test]
+    fn one_row_shows_the_option_under_the_cursor() {
+        let skin = Skin::new(ColorChoice::Plain);
+        let items = ["A", "B", "C"];
+        let shown = super::scrolled(&skin, "|", &items, (1, 1), |_, item| {
+            (*item).to_owned()
+        });
+        assert!(shown.iter().any(|row| row == "B"), "{shown:?}");
     }
 }

@@ -715,7 +715,7 @@ mod tests {
 
     #[rstest]
     #[case::top(&[], &["│ ›◻ Plans 1", "│  ◻ Plans 2", "│  ◻ Plans 3", "│  …", KEYS])]
-    #[case::middle(&[Key::Down, Key::Down, Key::Down], &["│  …", "│  ◻ Plans 2", "│  ◻ Plans 3", "│ ›◻ Plans 4", "│  …", KEYS])]
+    #[case::middle(&[Key::Down, Key::Down, Key::Down], &["│  …", "│  ◻ Plans 3", "│ ›◻ Plans 4", "│  ◻ Plans 5", KEYS])]
     #[case::bottom(&[Key::Up], &["│  …", "│  ◻ Plans 3", "│  ◻ Plans 4", "│ ›◻ Plans 5", KEYS])]
     fn the_view_shows_a_window_round_the_cursor(
         #[case] keys: &[Key],

@@ -1442,7 +1442,7 @@ mod tests {
         let frames = form.terminal().frames();
         assert!(
             frames.iter().any(|frame| {
-                frame.contains("│  …\n│  ○ Item 4\n│  ○ Item 5\n│  ● Item 6\n│  …\n")
+                frame.contains("│  …\n│  ○ Item 5\n│  ● Item 6\n│  ○ Item 7\n│  …\n")
             }),
             "{frames:?}"
         );

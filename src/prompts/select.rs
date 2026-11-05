@@ -561,7 +561,7 @@ mod tests {
 
     #[rstest]
     #[case::top(0, &["│  ● Plans 1", "│  ○ Plans 2", "│  ○ Plans 3", "│  …", KEYS])]
-    #[case::middle(3, &["│  …", "│  ○ Plans 2", "│  ○ Plans 3", "│  ● Plans 4", "│  …", KEYS])]
+    #[case::middle(3, &["│  …", "│  ○ Plans 3", "│  ● Plans 4", "│  ○ Plans 5", KEYS])]
     #[case::bottom(4, &["│  …", "│  ○ Plans 3", "│  ○ Plans 4", "│  ● Plans 5", KEYS])]
     fn the_view_shows_a_window_round_the_cursor(
         #[case] cursor: usize,
