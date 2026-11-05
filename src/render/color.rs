@@ -36,14 +36,22 @@ pub fn measure_text_width(text: &str) -> usize {
 }
 
 /// The bytes of the escape sequence at the start of `text`, which starts with
-/// ESC: a CSI up to its final byte (0x40 to 0x7e), else the character after
-/// ESC.
+/// ESC: a CSI up to its final byte (0x40 to 0x7e), an OSC up to BEL or ESC
+/// `\`, else the character after ESC.
 pub(crate) fn escape_len(text: &str) -> usize {
     let mut chars = text.char_indices().skip(1);
     match chars.next() {
         Some((_, '[')) => chars
             .find(|&(_, c)| ('\u{40}'..='\u{7e}').contains(&c))
             .map_or(text.len(), |(at, c)| at + c.len_utf8()),
+        Some((_, ']')) => [
+            text.find('\x07').map(|at| at + 1),
+            text.find("\x1b\\").map(|at| at + 2),
+        ]
+        .into_iter()
+        .flatten()
+        .min()
+        .unwrap_or(text.len()),
         Some((at, c)) => at + c.len_utf8(),
         None => text.len(),
     }
@@ -61,6 +69,8 @@ mod tests {
     #[case::styled("\x1b[36m\x1b[1mabc\x1b[0m", 3)]
     #[case::cursor_move("\x1b[2Kab\x1b[1A", 2)]
     #[case::bare_escape("a\x1bxb", 2)]
+    #[case::link_st("\x1b]8;;https://example.com\x1b\\docs\x1b]8;;\x1b\\", 4)]
+    #[case::link_bel("\x1b]8;;https://example.com\x07docs\x1b]8;;\x07", 4)]
     fn width_skips_escapes(#[case] text: &str, #[case] columns: usize) {
         assert_eq!(measure_text_width(text), columns);
     }

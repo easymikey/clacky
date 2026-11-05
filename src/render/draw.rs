@@ -300,11 +300,16 @@ pub(crate) fn clip_row(row: &str, width: usize, ellipsis: &str) -> String {
     }
     let budget = width.saturating_sub(measure_text_width(ellipsis));
     let mut out = String::with_capacity(row.len());
-    let (mut used, mut cut) = (0, false);
+    let (mut used, mut cut, mut linked) = (0, false, false);
     let mut rest = row;
     while !rest.is_empty() {
         if rest.starts_with('\x1b') {
             let (escape, tail) = rest.split_at(escape_len(rest));
+            if let Some(link) = escape.strip_prefix("\x1b]8;") {
+                linked = link.split_once(';').is_some_and(|(_, uri)| {
+                    !uri.trim_end_matches(['\x07', '\x1b', '\\']).is_empty()
+                });
+            }
             out.push_str(escape);
             rest = tail;
             continue;
@@ -324,6 +329,9 @@ pub(crate) fn clip_row(row: &str, width: usize, ellipsis: &str) -> String {
             }
         }
         rest = tail;
+    }
+    if linked {
+        out.push_str("\x1b]8;;\x1b\\");
     }
     out
 }
@@ -450,6 +458,25 @@ mod tests {
     ) {
         assert_eq!(clip_row(row, width, "…"), clipped);
         assert!(measure_text_width(&clip_row(row, width, "…")) <= width);
+    }
+
+    #[test]
+    fn a_link_is_cut_by_its_text_and_closed() {
+        let link = "\x1b]8;;https://example.com/docs\x1b\\documentation\x1b]8;;\x1b\\";
+        assert_eq!(measure_text_width(link), 13);
+        assert_eq!(
+            clip_row(link, 6, "…"),
+            "\x1b]8;;https://example.com/docs\x1b\\docum…\x1b]8;;\x1b\\"
+        );
+    }
+
+    #[test]
+    fn a_link_cut_open_is_closed() {
+        let open = "\x1b]8;;https://example.com/docs\x1b\\documentation";
+        assert_eq!(
+            clip_row(open, 6, "…"),
+            "\x1b]8;;https://example.com/docs\x1b\\docum…\x1b]8;;\x1b\\"
+        );
     }
 
     #[test]
