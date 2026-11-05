@@ -171,7 +171,12 @@ impl Prompt for DatePrompt {
                 }));
             }
             Phase::Cancelled => {
-                frame.row(state.field.render(&Skin::new(ColorChoice::Plain)));
+                frame.row(
+                    state.field.render(
+                        &Skin::new(ColorChoice::Plain)
+                            .with_messages(skin.messages().clone()),
+                    ),
+                );
             }
         }
     }
@@ -237,14 +242,14 @@ mod tests {
 
     use crate::{
         core::{
-            ask::{Key, Phase, Prompt},
+            ask::{Frame, Key, Phase, Prompt},
             error::Error,
             session::Session,
             settings::Settings,
         },
         fake::{Script, testing},
         prompts::date::date,
-        render::{color::ColorChoice, messages::Messages},
+        render::{color::ColorChoice, messages::Messages, style::Skin},
         terminal::TerminalKind,
         values::date::{Date, DateOrder},
     };
@@ -394,5 +399,17 @@ mod tests {
             ["│  17-mm-yyyy"]
         );
         assert_eq!(rows(&prompt, chars("17"), Phase::Cancelled), ["17-mm-yyyy"]);
+    }
+
+    #[test]
+    fn a_cancelled_row_keeps_the_session_placeholders() {
+        let messages = Messages::english().year("jjjj").month("MM").day("tt");
+        let skin = Skin::new(ColorChoice::Plain).with_messages(messages);
+        let prompt = date("When?").order(DateOrder::Dmy);
+        let mut frame = Frame::skinned(skin, Some(40));
+        if let Some(state) = testing::after(&prompt, chars("17")) {
+            prompt.view(&state, Phase::Cancelled, &mut frame);
+        }
+        assert_eq!(frame.rows(), ["17-MM-jjjj"]);
     }
 }
