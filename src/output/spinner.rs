@@ -162,7 +162,8 @@ fn timer(elapsed: Duration) -> String {
 }
 
 /// A turning frame with a message. Ctrl-C ends it with a red `Canceled` line
-/// and [`Error::Interrupted`]
+/// and [`Error::Interrupted`]; a spinner dropped while it runs
+/// ends the same way.
 ///
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
@@ -416,10 +417,8 @@ impl<'s, T: Terminal> Spinner<'s, T> {
 impl<T: Terminal> Drop for Spinner<'_, T> {
     fn drop(&mut self) {
         if matches!(self.phase, Phase::Running(_)) {
-            self.session.spinner_ended();
-            if self.output == OutputMode::Animated {
-                self.session.write(SHOW_CURSOR).unwrap_or_default();
-            }
+            let cancelled = self.session.skin().messages().cancelled.to_string();
+            self.end(Ending::Cancel, &cancelled).unwrap_or_default();
         }
     }
 }
@@ -768,6 +767,34 @@ mod tests {
         assert!(matches!(ticked, Err(Error::Interrupted)), "{ticked:?}");
         let shown = screen(&session.terminal().inner.written());
         assert_eq!(shown, "│\n◇  One done\n│\n■  Canceled");
+    }
+
+    #[test]
+    fn a_spinner_dropped_while_running_ends_canceled() -> Result<()> {
+        let session = session(TerminalKind::Live);
+        session.spinner().start("Working")?;
+        let raw = session.terminal().written();
+        assert_eq!(screen(&raw), "│\n■  Canceled");
+        assert!(raw.ends_with("\x1b[?25h"), "{raw:?}");
+        Ok(())
+    }
+
+    #[test]
+    fn a_wait_dropped_mid_run_ends_canceled() {
+        use std::{
+            future::Future as _,
+            pin::pin,
+            task::{Context, Poll, Waker},
+        };
+
+        let session = session(TerminalKind::Live);
+        {
+            let mut wait = pin!(session.wait("Fetching", std::future::pending::<()>()));
+            let mut cx = Context::from_waker(Waker::noop());
+            assert!(matches!(wait.as_mut().poll(&mut cx), Poll::Pending));
+        }
+        let shown = screen(&session.terminal().written());
+        assert_eq!(shown, "│\n■  Canceled");
     }
 
     #[test]
