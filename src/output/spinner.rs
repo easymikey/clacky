@@ -162,7 +162,7 @@ fn timer(elapsed: Duration) -> String {
 }
 
 /// A turning frame with a message. Ctrl-C ends it with a red `Canceled` line
-/// and [`Error::Interrupted`].
+/// and [`Error::Interrupted`]
 ///
 /// ```no_run
 /// # use clacky::{core::session::Session, terminal::Terminal};
@@ -179,6 +179,9 @@ pub struct Spinner<'s, T: Terminal> {
     session: &'s Session<T>,
     indicator: Indicator,
     output: OutputMode,
+    /// The Ctrl-C count when the spinner started; a higher count is a new
+    /// press.
+    seen: u64,
     phase: Phase<T>,
 }
 
@@ -198,6 +201,7 @@ impl<T: Terminal> Session<T> {
             session: self,
             indicator: Indicator::Dots,
             output,
+            seen: self.terminal().interrupts(),
             phase: Phase::Ready,
         }
     }
@@ -241,17 +245,15 @@ impl<'s, T: Terminal> Spinner<'s, T> {
             Phase::Ready => {}
             Phase::Running(_) | Phase::Finished => return Ok(()),
         }
-        if self.session.terminal().interrupts() != 0 {
-            self.phase = Phase::Finished;
-            return Err(Error::Interrupted);
-        }
         let look = self.look();
+        let catching = self.session.terminal().catch_interrupts();
+        self.seen = self.session.terminal().interrupts();
         let mut running = Running {
             message: message.to_string(),
             frame: 0,
             started: Instant::now(),
             rows: Vec::new(),
-            _catching: self.session.terminal().catch_interrupts(),
+            _catching: catching,
             _quiet: self.session.terminal().quiet(),
         };
         let hidden = match look.output {
@@ -400,7 +402,7 @@ impl<'s, T: Terminal> Spinner<'s, T> {
     }
 
     fn check_interrupt(&mut self) -> Result<()> {
-        if self.session.terminal().interrupts() == 0 {
+        if self.session.terminal().interrupts() == self.seen {
             return Ok(());
         }
         if matches!(self.phase, Phase::Running(_)) {
@@ -747,14 +749,25 @@ mod tests {
     }
 
     #[test]
-    fn ctrl_c_before_the_start_draws_nothing() {
+    fn a_ctrl_c_counted_earlier_does_not_stop_a_new_spinner() {
         let session = Session::new(
-            Script::new(TerminalKind::Live, [], []).interrupted_before(),
+            Pressed {
+                inner: Script::new(TerminalKind::Live, [], []),
+                count: Cell::new(1),
+            },
             Settings::new(ColorChoice::Plain),
         );
-        let started = session.spinner().start("Working");
-        assert!(matches!(started, Err(Error::Interrupted)), "{started:?}");
-        assert_eq!(session.terminal().written(), "");
+        let mut first = session.spinner();
+        let started = first.start("One");
+        let stopped = first.stop("One done");
+        let mut second = session.spinner();
+        let again = second.start("Two");
+        session.terminal().count.set(2);
+        let ticked = second.tick();
+        assert!(started.is_ok() && stopped.is_ok() && again.is_ok());
+        assert!(matches!(ticked, Err(Error::Interrupted)), "{ticked:?}");
+        let shown = screen(&session.terminal().inner.written());
+        assert_eq!(shown, "│\n◇  One done\n│\n■  Canceled");
     }
 
     #[test]
