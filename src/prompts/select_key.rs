@@ -6,7 +6,10 @@ use crate::{
         error::{Error, Result},
     },
     prompts::choice::{Choice, Options, rail},
-    render::{color::ColorChoice, messages::Messages},
+    render::{
+        color::ColorChoice,
+        messages::{Messages, Refusal},
+    },
     values::line::Cancellation,
 };
 
@@ -262,14 +265,20 @@ impl<V> Prompt for SelectKey<V> {
             .collect()
     }
 
-    /// An empty line takes the highlighted option, a key picks its option, else
-    /// cancels.
+    /// An empty line takes the highlighted option, a key picks its option.
     fn typed(&self, line: &str, _messages: &Messages) -> Vec<Key> {
         match line.trim().chars().next() {
             None => vec![Key::Enter],
             Some(typed) if self.find(typed).is_some() => vec![Key::Char(typed)],
             Some(_) => vec![Key::Cancel],
         }
+    }
+
+    fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
+        let typed = line.trim().chars().next()?;
+        self.find(typed)
+            .is_none()
+            .then(|| Refusal::Said(messages.not_an_answer.to_string()))
     }
 
     fn by_default(&self) -> Option<usize> {
@@ -355,7 +364,7 @@ mod tests {
     #[case::line_key(Case::Insensitive, TerminalKind::Dumb, vec![], &["c"], "gamma")]
     #[case::line_first_letter(Case::Insensitive, TerminalKind::Dumb, vec![], &["Beta"], "beta")]
     #[case::line_empty_takes_the_highlighted(Case::Insensitive, TerminalKind::Dumb, vec![], &[""], "alpha")]
-    #[case::line_unknown_key(Case::Insensitive, TerminalKind::Dumb, vec![], &["z"], "cancelled")]
+    #[case::line_unknown_key_asks_again(Case::Insensitive, TerminalKind::Dumb, vec![], &["z", "c"], "gamma")]
     #[case::line_end_of_input(Case::Insensitive, TerminalKind::Dumb, vec![], &[], "cancelled")]
     #[case::piped(Case::Insensitive, TerminalKind::Redirected, vec![], &["a"], "no input")]
     fn a_key_answers_with_its_value(

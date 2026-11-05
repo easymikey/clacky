@@ -432,7 +432,7 @@ impl<V, S> Prompt for MultiSelect<V, S> {
         self.picked.as_ref().and_then(|_| self.opening())
     }
 
-    /// Numbers name the options to pick; none keeps the marked; else cancels.
+    /// Numbers name the options to pick; none keeps the marked.
     fn typed(&self, line: &str, _messages: &Messages) -> Vec<Key> {
         let (Some(named), Some(start)) = (named(line, self.count()), self.opening())
         else {
@@ -450,7 +450,9 @@ impl<V, S> Prompt for MultiSelect<V, S> {
     }
 
     fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
-        let named = named(line, self.count())?;
+        let Some(named) = named(line, self.count()) else {
+            return Some(Refusal::Said(messages.not_an_answer.to_string()));
+        };
         refused_disabled(&named, |at| self.pickable(at), messages)
     }
 }
@@ -551,8 +553,8 @@ mod tests {
     #[case::line_numbers(TerminalKind::Dumb, vec![], &["1 3"], "[ac]")]
     #[case::line_commas(TerminalKind::Dumb, vec![], &["1,2"], "[ab]")]
     #[case::line_keeps_the_marked(TerminalKind::Dumb, vec![], &[""], "[b]")]
-    #[case::line_words(TerminalKind::Dumb, vec![], &["all"], "cancelled")]
-    #[case::line_out_of_range(TerminalKind::Dumb, vec![], &["4"], "cancelled")]
+    #[case::line_words_ask_again(TerminalKind::Dumb, vec![], &["all", "1 3"], "[ac]")]
+    #[case::line_out_of_range_asks_again(TerminalKind::Dumb, vec![], &["4", "1 3"], "[ac]")]
     #[case::line_end_of_input(TerminalKind::Dumb, vec![], &[], "cancelled")]
     fn a_multiselect_answers_with_the_values_in_option_order(
         #[case] kind: TerminalKind,

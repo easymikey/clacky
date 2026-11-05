@@ -311,7 +311,7 @@ impl<V, S> Prompt for Select<V, S> {
     }
 
     /// An empty line takes the highlighted option, a number or a label picks
-    /// it, else cancels.
+    /// it.
     fn typed(&self, line: &str, _messages: &Messages) -> Vec<Key> {
         let line = line.trim();
         if line.is_empty() {
@@ -328,7 +328,13 @@ impl<V, S> Prompt for Select<V, S> {
     }
 
     fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
-        let at = self.named(line.trim())?;
+        let line = line.trim();
+        if line.is_empty() {
+            return None;
+        }
+        let Some(at) = self.named(line) else {
+            return Some(Refusal::Said(messages.not_an_answer.to_string()));
+        };
         refused_disabled(
             &[at.saturating_add(1)],
             |at| self.options.open(at),
@@ -452,9 +458,9 @@ mod tests {
     #[case::line_number(TerminalKind::Dumb, vec![], &["2"], "b")]
     #[case::line_last(TerminalKind::Dumb, vec![], &["3"], "c")]
     #[case::line_first_padded(TerminalKind::Dumb, vec![], &[" 1 "], "a")]
-    #[case::line_zero(TerminalKind::Dumb, vec![], &["0"], "cancelled")]
-    #[case::line_out_of_range(TerminalKind::Dumb, vec![], &["4"], "cancelled")]
-    #[case::line_words(TerminalKind::Dumb, vec![], &["B"], "cancelled")]
+    #[case::line_zero_asks_again(TerminalKind::Dumb, vec![], &["0", "2"], "b")]
+    #[case::line_out_of_range_asks_again(TerminalKind::Dumb, vec![], &["4", "2"], "b")]
+    #[case::line_words_ask_again(TerminalKind::Dumb, vec![], &["B", "2"], "b")]
     #[case::line_end_of_input(TerminalKind::Dumb, vec![], &[], "cancelled")]
     fn a_session_answers_with_the_value_of_the_option(
         #[case] kind: TerminalKind,

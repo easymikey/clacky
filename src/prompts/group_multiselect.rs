@@ -538,7 +538,7 @@ impl<V> Prompt for GroupMultiSelect<V> {
         self.picked.as_ref().and_then(|_| self.opening())
     }
 
-    /// Numbers name the options to pick; none keeps the marked; else cancels.
+    /// Numbers name the options to pick; none keeps the marked.
     fn typed(&self, line: &str, _messages: &Messages) -> Vec<Key> {
         let (Some(named), Some(start)) =
             (named(line, self.items().len()), self.opening())
@@ -559,7 +559,9 @@ impl<V> Prompt for GroupMultiSelect<V> {
 
     fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
         let items = self.items();
-        let named = named(line, items.len())?;
+        let Some(named) = named(line, items.len()) else {
+            return Some(Refusal::Said(messages.not_an_answer.to_string()));
+        };
         refused_disabled(
             &named,
             |rank| items.get(rank).is_some_and(|at| self.pickable(*at)),
@@ -665,7 +667,7 @@ mod tests {
     #[case::line_numbers(GroupPick::Whole, TerminalKind::Dumb, vec![], &["1 3"], "[ac]")]
     #[case::line_numbers_items_only(GroupPick::ItemsOnly, TerminalKind::Dumb, vec![], &["2,3"], "[bc]")]
     #[case::line_keeps_the_marked(GroupPick::Whole, TerminalKind::Dumb, vec![], &[""], "[]")]
-    #[case::line_out_of_range(GroupPick::Whole, TerminalKind::Dumb, vec![], &["4"], "cancelled")]
+    #[case::line_out_of_range_asks_again(GroupPick::Whole, TerminalKind::Dumb, vec![], &["4", "1 3"], "[ac]")]
     #[case::line_end_of_input(GroupPick::Whole, TerminalKind::Dumb, vec![], &[], "cancelled")]
     #[case::piped(GroupPick::Whole, TerminalKind::Redirected, vec![], &["1"], "no input")]
     fn a_group_multiselect_answers_with_the_values_in_option_order(

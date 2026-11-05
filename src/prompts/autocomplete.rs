@@ -904,8 +904,10 @@ impl<V> Prompt for Autocomplete<'_, V> {
                 .search
                 .matcher
                 .places(&self.search.options.entries, line);
-            let shut = !shown.is_empty()
-                && !shown.iter().any(|at| self.search.options.open(*at));
+            if shown.is_empty() {
+                return Some(Refusal::Said(messages.not_an_answer.to_string()));
+            }
+            let shut = !shown.iter().any(|at| self.search.options.open(*at));
             return shut.then(|| Refusal::Said(messages.option_disabled.to_string()));
         };
         refused_disabled(&[number], |at| self.search.options.open(at), messages)
@@ -1068,13 +1070,15 @@ impl<V> Prompt for AutocompleteMultiSelect<'_, V> {
         rows.chain([messages.listing_numbers.to_string()]).collect()
     }
 
-    /// Numbers name the options to pick, none keeps the marked, else cancels.
+    /// Numbers name the options to pick, none keeps the marked.
     fn typed(&self, line: &str, _messages: &Messages) -> Vec<Key> {
         self.search.typed_many(line, self.many.start())
     }
 
     fn misread(&self, line: &str, messages: &Messages) -> Option<Refusal> {
-        let named = named(line, self.search.options.entries.len())?;
+        let Some(named) = named(line, self.search.options.entries.len()) else {
+            return Some(Refusal::Said(messages.not_an_answer.to_string()));
+        };
         refused_disabled(&named, |at| self.search.options.open(at), messages)
     }
 
@@ -1536,28 +1540,30 @@ mod tests {
     }
 
     #[rstest]
-    #[case::number("3", "cherry")]
-    #[case::text("ban", "banana")]
-    #[case::unmatched_text("zzz", "cancelled")]
-    #[case::number_past_the_list("9", "cancelled")]
+    #[case::number(&["3"], "cherry")]
+    #[case::text(&["ban"], "banana")]
+    #[case::unmatched_text_asks_again(&["zzz", "ban"], "banana")]
+    #[case::number_past_the_list_asks_again(&["9", "3"], "cherry")]
+    #[case::unmatched_text_then_end_of_input(&["zzz"], "cancelled")]
     fn a_line_autocomplete_takes_a_number_or_a_name(
-        #[case] line: &'static str,
+        #[case] lines: &'static [&'static str],
         #[case] expected: &str,
     ) {
-        let form = bare(Script::new(TerminalKind::Dumb, [], [line]));
+        let form = bare(Script::new(TerminalKind::Dumb, [], lines.iter().copied()));
         let result = form.ask(one()).map(|fruit| fruit.0);
         assert_eq!(outcome(&result), expected, "{result:?}");
     }
 
     #[rstest]
-    #[case::numbers("1 2", "apple+banana")]
-    #[case::none_keeps_the_marked("", "date")]
-    #[case::words("all", "cancelled")]
+    #[case::numbers(&["1 2"], "apple+banana")]
+    #[case::none_keeps_the_marked(&[""], "date")]
+    #[case::words_ask_again(&["all", "1 2"], "apple+banana")]
+    #[case::words_then_end_of_input(&["all"], "cancelled")]
     fn a_line_multiselect_takes_numbers(
-        #[case] line: &'static str,
+        #[case] lines: &'static [&'static str],
         #[case] expected: &str,
     ) {
-        let form = bare(Script::new(TerminalKind::Dumb, [], [line]));
+        let form = bare(Script::new(TerminalKind::Dumb, [], lines.iter().copied()));
         let result = form.ask(many().optional()).map(|got| names(&got));
         assert_eq!(outcome(&result), expected, "{result:?}");
     }
