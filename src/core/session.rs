@@ -9,7 +9,7 @@ use std::{
     sync::{
         Mutex,
         PoisonError,
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
 };
 
@@ -211,6 +211,9 @@ pub struct Session<T: Terminal> {
     scope: Mutex<Abort>,
     /// The warning the next question opens under; set by `ask_until` only.
     warning: Mutex<Option<String>>,
+    /// Whether a prompt waited for the person since `ask_until` last cleared
+    /// it.
+    asked: AtomicBool,
 }
 
 impl Session<Console> {
@@ -244,6 +247,7 @@ impl<T: Terminal> Session<T> {
             abort: Abort::default(),
             scope: Mutex::new(Abort::default()),
             warning: Mutex::new(None),
+            asked: AtomicBool::new(false),
             terminal: term,
         }
     }
@@ -385,7 +389,8 @@ impl<T: Terminal> Session<T> {
 
     /// Asks the question `make` builds and runs `attempt` on the answer while
     /// `label` shows a spinner; a failed attempt is retried up to `tries` times
-    /// when `retry` gives a warning, and a redirected input is asked once. The
+    /// when `retry` gives a warning; an answer nobody typed (redirected input,
+    /// `given`, `given_line`, a taken default) gets one attempt. The
     /// question may end in [`Ask::map`], so `attempt` gets the mapped answer.
     ///
     /// # Errors
@@ -413,6 +418,7 @@ impl<T: Terminal> Session<T> {
     ) -> Result<std::result::Result<A, F>> {
         *self.warning.lock().unwrap_or_else(PoisonError::into_inner) =
             warning.map(str::to_owned);
+        self.asked.store(false, Ordering::Release);
         let asked = make().run(self);
         // A question that never reached a prompt leaves its warning behind.
         self.warning
@@ -421,10 +427,12 @@ impl<T: Terminal> Session<T> {
             .take();
         let answer = asked?;
         let outcome = self.wait(label, attempt(&answer)).await?;
-        let again =
-            outcome.as_ref().err().and_then(retry).filter(|_| {
-                tries > 1 && self.terminal.kind() != TerminalKind::Redirected
-            });
+        // An answer nobody typed would come back the same; it gets one attempt.
+        let again = outcome
+            .as_ref()
+            .err()
+            .and_then(retry)
+            .filter(|_| tries > 1 && self.asked.load(Ordering::Acquire));
         match again {
             None => Ok(outcome),
             Some(reason) => {
@@ -478,8 +486,14 @@ impl<T: Terminal> Session<T> {
         }
         let _quiet = self.terminal.quiet();
         match self.terminal.kind() {
-            TerminalKind::Live => self.drive_keys(&prompt, state, warning, &abort),
-            TerminalKind::Dumb => self.drive_lines(&prompt, state, warning, &abort),
+            TerminalKind::Live => {
+                self.asked.store(true, Ordering::Release);
+                self.drive_keys(&prompt, state, warning, &abort)
+            }
+            TerminalKind::Dumb => {
+                self.asked.store(true, Ordering::Release);
+                self.drive_lines(&prompt, state, warning, &abort)
+            }
             TerminalKind::Redirected => match prompt.redirected() {
                 Redirected::Line => self.drive_piped(&prompt, state, &abort),
                 Redirected::NoInput => Err(no_input(&prompt)),
@@ -931,13 +945,16 @@ pub(crate) fn stopped_by(quit: Cancellation) -> Error {
 mod tests {
     #![expect(clippy::panic_in_result_fn, reason = "assert is the point of a test")]
 
-    use std::time::{Duration, Instant};
+    use std::{
+        num::NonZeroU8,
+        time::{Duration, Instant},
+    };
 
     use rstest::rstest;
 
     use crate::{
         core::{
-            ask::{Ask as _, CancelAsNone as _, Peek, Prefill, Prompt as _},
+            ask::{Ask, CancelAsNone as _, Peek, Prefill, Prompt as _},
             error::{Error, Result},
             keys::{Action, KeyMap},
             session::{Painter, Session},
@@ -1629,6 +1646,47 @@ mod tests {
         let first = first.map(String::as_str).unwrap_or_default();
         assert!(!first.contains('…'), "{first}");
         assert_eq!(first.matches('x').count(), 100, "{first}");
+    }
+
+    async fn tried_once<Q: Ask<Output = String>>(
+        ui: &Session<Script>,
+        make: impl Fn() -> Q,
+    ) -> Result<()> {
+        let attempts = std::cell::Cell::new(0_u8);
+        let done = ui
+            .ask_until(
+                make,
+                "Checking",
+                async |_: &String| {
+                    attempts.set(attempts.get() + 1);
+                    Err::<(), _>("wrong")
+                },
+                |_| Some("wrong".to_owned()),
+                NonZeroU8::new(3).unwrap_or(NonZeroU8::MIN),
+            )
+            .await?;
+        assert_eq!((done, attempts.get()), (Err("wrong"), 1));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn until_tries_a_given_answer_once() -> Result<()> {
+        let ui = bare(Script::new(TerminalKind::Live, [], []));
+        tried_once(&ui, || ask_text("Code").given(Some("000000".to_owned()))).await
+    }
+
+    #[tokio::test]
+    async fn until_tries_a_given_line_once() -> Result<()> {
+        let ui = bare(Script::new(TerminalKind::Live, [], []));
+        tried_once(&ui, || ask_text("Code").given_line(Some("000000"))).await
+    }
+
+    #[tokio::test]
+    async fn until_tries_a_taken_default_once() -> Result<()> {
+        tried_once(&defaulting(TerminalKind::Live), || {
+            ask_text("Code").default("000000")
+        })
+        .await
     }
 
     fn defaulting(kind: TerminalKind) -> Session<Script> {
