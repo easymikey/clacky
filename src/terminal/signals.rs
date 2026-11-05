@@ -76,7 +76,7 @@ impl Drop for Catching {
 }
 
 #[cfg(windows)]
-#[must_use = "SIGTERM and SIGHUP are handled only while the guard lives"]
+#[must_use = "SIGTERM, SIGHUP and SIGINT are handled only while the guard lives"]
 #[derive(Debug)]
 /// Windows restores the console in its close handler instead.
 pub(crate) struct Terminating;
@@ -100,20 +100,20 @@ mod terminating {
 
     use crate::render::draw::SHOW_CURSOR;
 
-    const SIGNALS: [libc::c_int; 2] = [libc::SIGTERM, libc::SIGHUP];
+    const SIGNALS: [libc::c_int; 3] = [libc::SIGTERM, libc::SIGHUP, libc::SIGINT];
 
     struct State {
         holders: usize,
         /// The settings the first holder found, to put back.
         settings: Option<libc::termios>,
         /// The previous action of each signal in `SIGNALS` that was taken over.
-        saved: [Option<libc::sigaction>; 2],
+        saved: [Option<libc::sigaction>; 3],
     }
 
     static STATE: Mutex<State> = Mutex::new(State {
         holders: 0,
         settings: None,
-        saved: [None, None],
+        saved: [None, None, None],
     });
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -138,10 +138,10 @@ mod terminating {
         act(Step::Raise(signal));
     }
 
-    #[must_use = "SIGTERM and SIGHUP are handled only while the guard lives"]
+    #[must_use = "SIGTERM, SIGHUP and SIGINT are handled only while the guard lives"]
     #[derive(Debug)]
-    /// While this lives, SIGTERM and SIGHUP put the terminal back and show the
-    /// cursor before ending the program.
+    /// While this lives, SIGTERM, SIGHUP and SIGINT put the terminal back and
+    /// show the cursor before ending the program.
     pub(crate) struct Terminating;
 
     impl Terminating {
@@ -231,8 +231,20 @@ mod terminating {
         Some(saved)
     }
 
+    /// Puts back the action `replace` saved, unless something took the signal
+    /// over since (a spinner catching Ctrl-C).
+    #[expect(
+        clippy::as_conversions,
+        reason = "`sigaction` stores a handler as an integer"
+    )]
     fn put_back((signal, saved): (libc::c_int, Option<libc::sigaction>)) {
-        if let Some(saved) = saved {
+        // SAFETY: an all-zero `sigaction` is valid, `sigaction` fills it in.
+        let mut current: libc::sigaction = unsafe { mem::zeroed() };
+        // SAFETY: a null new action only reads the current one into the local.
+        unsafe { libc::sigaction(signal, ptr::null(), &raw mut current) };
+        let handler: extern "C" fn(libc::c_int) = on_terminate;
+        if let Some(saved) = saved.filter(|_| current.sa_sigaction == handler as usize)
+        {
             // SAFETY: the pointer leads to a live local; failure is ignored.
             unsafe { libc::sigaction(signal, ptr::from_ref(&saved), ptr::null_mut()) };
         }
@@ -339,7 +351,7 @@ mod tests {
         current.sa_sigaction
     }
 
-    /// Tests that change what SIGTERM and SIGHUP do run one at a time.
+    /// Tests that change what SIGTERM, SIGHUP and SIGINT do run one at a time.
     static TERMINATION: Mutex<()> = Mutex::new(());
 
     fn set_handler(signal: libc::c_int, handler: usize) -> libc::sigaction {
@@ -357,12 +369,13 @@ mod tests {
         handler_of(libc::SIGINT)
     }
 
-    fn handlers_of_termination() -> [usize; 2] {
-        [libc::SIGTERM, libc::SIGHUP].map(handler_of)
+    fn handlers_of_termination() -> [usize; 3] {
+        [libc::SIGTERM, libc::SIGHUP, libc::SIGINT].map(handler_of)
     }
 
     #[test]
     fn the_handler_is_replaced_only_while_something_catches() {
+        let _alone = TERMINATION.lock().unwrap_or_else(PoisonError::into_inner);
         let before = handler_of_interrupt();
         let first = Catching::start();
         let second = Catching::start();
@@ -396,6 +409,7 @@ mod tests {
         let ignored = libc::SIG_IGN;
         let before_term = set_handler(libc::SIGTERM, ignored);
         let before_hup = set_handler(libc::SIGHUP, own_handler);
+        let before_int = set_handler(libc::SIGINT, own_handler);
         // SAFETY: an all-zero `termios` is a valid value to hold.
         let settings: libc::termios = unsafe { mem::zeroed() };
         let guard = Terminating::start(settings);
@@ -404,9 +418,13 @@ mod tests {
         let after = handlers_of_termination();
         set_handler(libc::SIGTERM, before_term.sa_sigaction);
         set_handler(libc::SIGHUP, before_hup.sa_sigaction);
+        set_handler(libc::SIGINT, before_int.sa_sigaction);
         assert_eq!(
             (during, after),
-            ([ignored, own_handler], [ignored, own_handler])
+            (
+                [ignored, own_handler, own_handler],
+                [ignored, own_handler, own_handler]
+            )
         );
     }
 
@@ -426,6 +444,39 @@ mod tests {
             (during != before, while_held, handlers_of_termination()),
             (true, during, before)
         );
+    }
+
+    #[test]
+    fn a_guard_takes_over_ctrl_c_only_while_it_lives() {
+        let _alone = TERMINATION.lock().unwrap_or_else(PoisonError::into_inner);
+        // SAFETY: an all-zero `termios` is a valid value to hold.
+        let settings: libc::termios = unsafe { mem::zeroed() };
+        let before = handler_of_interrupt();
+        let guard = Terminating::start(settings);
+        let during = handler_of_interrupt();
+        drop(guard);
+        assert_eq!((during != before, handler_of_interrupt()), (true, before));
+    }
+
+    #[test]
+    #[expect(
+        clippy::as_conversions,
+        reason = "`sigaction` stores a handler as an integer"
+    )]
+    fn a_guard_leaves_a_ctrl_c_handler_set_after_it_started() {
+        extern "C" fn own(_: libc::c_int) {}
+        let _alone = TERMINATION.lock().unwrap_or_else(PoisonError::into_inner);
+        let own_handler: extern "C" fn(libc::c_int) = own;
+        let own_handler = own_handler as usize;
+        // SAFETY: an all-zero `termios` is a valid value to hold.
+        let settings: libc::termios = unsafe { mem::zeroed() };
+        let before = handler_of_interrupt();
+        let guard = Terminating::start(settings);
+        set_handler(libc::SIGINT, own_handler);
+        drop(guard);
+        let after = handler_of_interrupt();
+        set_handler(libc::SIGINT, before);
+        assert_eq!(after, own_handler);
     }
 
     #[test]
