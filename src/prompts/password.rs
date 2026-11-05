@@ -100,7 +100,9 @@ impl Password {
     #[cfg(feature = "secrecy")]
     #[must_use]
     pub fn secret(self) -> impl Ask<Output = secrecy::SecretString> {
-        self.map(|mut text| secrecy::SecretString::from(std::mem::take(&mut *text)))
+        // Copied to an exact-size box: moving the 256-byte buffer would shrink it by
+        // realloc and leave the old block unwiped; `text` is wiped on drop.
+        self.map(|text| secrecy::SecretString::from(text.as_str()))
     }
 }
 
@@ -190,7 +192,7 @@ mod tests {
 
     const WRONG: &str = "that password did not match - try again";
 
-    fn chars(text: &'static str) -> impl Iterator<Item = Key> {
+    fn chars(text: &str) -> impl Iterator<Item = Key> {
         text.chars().map(Key::Char)
     }
 
@@ -503,6 +505,18 @@ mod tests {
         let ui = live(chars("hunter2").chain([Key::Enter]));
         let secret = ui.ask(password("Pass").secret())?;
         assert_eq!(secret.expose_secret(), "hunter2");
+        Ok(())
+    }
+
+    #[cfg(feature = "secrecy")]
+    #[test]
+    fn secret_copies_the_typed_text_exactly() -> Result<()> {
+        use secrecy::ExposeSecret as _;
+
+        let typed = "p\u{e4}ss w0rd ".repeat(40);
+        let ui = live(chars(&typed).chain([Key::Enter]));
+        let secret = ui.ask(password("Pass").secret())?;
+        assert_eq!(secret.expose_secret(), typed);
         Ok(())
     }
 
