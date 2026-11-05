@@ -493,9 +493,8 @@ mod tests {
     fn one_row_shows_the_option_under_the_cursor() {
         let skin = Skin::new(ColorChoice::Plain);
         let items = ["A", "B", "C"];
-        let shown = super::scrolled(&skin, "|", &items, (1, 1), |_, item| {
-            (*item).to_owned()
-        });
+        let shown =
+            super::scrolled(&skin, "|", &items, (1, 1), |_, item| (*item).to_owned());
         assert!(shown.iter().any(|row| row == "B"), "{shown:?}");
     }
 }
