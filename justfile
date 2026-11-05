@@ -54,9 +54,10 @@ hooks:
     git config core.hooksPath .githooks
 
 # Checks, the semver check, then a dry run of the release. Pass `execute` to do it.
+# Below 1.0 cargo-semver-checks calls an API break "major", while the 0.x bump for it is minor.
 ship level execute="":
     cargo bin just default
-    cargo bin cargo-semver-checks check-release --workspace
+    cargo bin cargo-semver-checks check-release --workspace --release-type {{ if level == "patch" { "patch" } else { "major" } }}
     cargo bin cargo-release {{ level }} --workspace {{ if execute == "execute" { "--execute" } else { "" } }}
 # Print the changelog section of a tag such as clacky-v0.2.0.
 release-notes tag:
