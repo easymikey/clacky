@@ -518,9 +518,9 @@ mod tests {
             .validate(|_: &str| Ok::<(), String>(()))
             .secret();
         assert_eq!(ui.ask(checked)?.expose_secret(), "hunter2");
-        let ui = live([]);
+        let other = live([]);
         let given = password("Pass").given(Some(Zeroizing::new("given".to_owned())));
-        assert_eq!(ui.ask(given.secret())?.expose_secret(), "given");
+        assert_eq!(other.ask(given.secret())?.expose_secret(), "given");
         Ok(())
     }
 
