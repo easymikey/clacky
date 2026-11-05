@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1](https://github.com/easymikey/clacky/compare/clacky-derive-v0.1.0...clacky-derive-v0.1.1) - 2026-11-05
+
+### Added
+
+- print raw text, password secret(), mapped answers in ask_until, bare intro titles
+
 ## [0.1.0](https://github.com/easymikey/clacky/releases/tag/clacky-derive-v0.1.0) - 2026-11-04
 
 ### Added

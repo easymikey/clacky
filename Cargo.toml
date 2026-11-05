@@ -1,6 +1,6 @@
 [package]
 name = "clacky"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
@@ -19,7 +19,7 @@ members = ["clacky-derive"]
 workspace = true
 
 [dependencies]
-clacky-derive = { version = "=0.1.0", path = "clacky-derive", optional = true }
+clacky-derive = { version = "=0.1.1", path = "clacky-derive", optional = true }
 unicode-width = { version = "0.2", default-features = false }
 unicode-segmentation = "1"
 zeroize = "1"
