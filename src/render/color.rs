@@ -36,8 +36,8 @@ pub fn measure_text_width(text: &str) -> usize {
 }
 
 /// The bytes of the escape sequence at the start of `text`, which starts with
-/// ESC: a CSI up to its final byte (0x40 to 0x7e), an OSC up to BEL or ESC
-/// `\`, else the character after ESC.
+/// ESC: a CSI up to its final byte (0x40 to 0x7e), a `]` sequence up to
+/// `BEL` or ESC `\`, else the character after ESC.
 pub(crate) fn escape_len(text: &str) -> usize {
     let mut chars = text.char_indices().skip(1);
     match chars.next() {
