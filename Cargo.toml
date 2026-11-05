@@ -10,7 +10,7 @@ description = "Clack-style terminal prompts: one question at a time on a rail, t
 readme = "README.md"
 authors = ["Mikhail Avdeev"]
 repository = "https://github.com/easymikey/clacky"
-exclude = [".unlazy/", "assets/", ".github/", ".githooks/", ".config/", "justfile", "rustfmt.toml", "release-plz.toml", "rust-toolchain.toml", "spellcheck.dic", "CONTRIBUTING.md"]
+exclude = [".unlazy/", "assets/", ".github/", ".githooks/", ".config/", "justfile", "rustfmt.toml", "release.toml", "rust-toolchain.toml", "_typos.toml", "CONTRIBUTING.md"]
 
 [workspace]
 members = ["clacky-derive"]
@@ -158,6 +158,6 @@ just = { version = "1.59.0", locked = true }
 cargo-deny = { version = "0.20.2", locked = true }
 cargo-machete = { version = "0.9.2", locked = true }
 cargo-nextest = { version = "0.9.150", locked = true }
-cargo-spellcheck = { version = "0.15.7", locked = true }
-release-plz = { version = "0.4.3", locked = true }
+typos-cli = { version = "1.52.0", locked = true, bins = ["typos"] }
+cargo-release = { version = "1.1.7", locked = true }
 cargo-semver-checks = { version = "0.51.0", locked = true }

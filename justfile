@@ -15,7 +15,7 @@ fmt-check:
     cargo +{{ nightly }} fmt --all --check
 
 spell:
-    cargo bin cargo-spellcheck check -m 1
+    cargo bin typos
 
 clippy:
     cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
@@ -49,19 +49,39 @@ commits range="origin/main..HEAD":
 ci-setup:
     rustup toolchain install {{ nightly }} --profile minimal --component rustfmt
     rustup toolchain install {{ msrv }} --profile minimal
-    sudo apt-get update
-    sudo apt-get install -y --no-install-recommends libclang-dev
 
 hooks:
     git config core.hooksPath .githooks
 
-release:
-    cargo bin cargo-semver-checks --version
-    PATH="$(printf '%s:' "$PWD"/.bin/rust-*/cargo-semver-checks/*/bin)$PATH" cargo bin release-plz update
-
-publish:
-    cargo bin release-plz release --git-token "${GITHUB_TOKEN:?set GITHUB_TOKEN}"
-
+# Checks, the semver check, then a dry run of the release. Pass `execute` to do it.
+ship level execute="":
+    cargo bin just default
+    cargo bin cargo-semver-checks check-release --workspace
+    cargo bin cargo-release {{ level }} --workspace {{ if execute == "execute" { "--execute" } else { "" } }}
+# Print the changelog section of a tag such as clacky-v0.2.0.
+release-notes tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tag="{{ tag }}"
+    crate="${tag%-v*}"
+    version="${tag##*-v}"
+    if [ "$crate" = "$tag" ] || [ -z "$crate" ] || [ -z "$version" ]; then
+        echo "release-notes: '$tag' is not <crate>-v<version>" >&2
+        exit 1
+    fi
+    dir="$(cargo pkgid -p "$crate")"
+    dir="${dir#path+file://}"
+    dir="${dir%%#*}"
+    file="$dir/CHANGELOG.md"
+    notes="$(awk -v head="## $version (" '
+        /^## / { if (found) exit; found = index($0, head) == 1; next }
+        found { print }
+    ' "$file")"
+    if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+        echo "release-notes: no notes for $version in $file" >&2
+        exit 1
+    fi
+    printf '%s\n' "$notes" | awk 'NF { started = 1 } started'
 clippy-no-default:
     cargo clippy --workspace --all-targets --no-default-features --locked -- -D warnings
 

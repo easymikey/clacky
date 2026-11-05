@@ -1,0 +1,11 @@
+# cargo-release config. Run it through `just ship <level>`, see CONTRIBUTING.md.
+# Tag per crate: clacky-v0.2.0, clacky-derive-v0.2.0.
+tag-name = "{{crate_name}}-v{{version}}"
+allow-branch = ["main"]
+sign-commit = false
+sign-tag = false
+pre-release-commit-message = "chore: release"
+# Paths are relative to each crate's directory.
+pre-release-replacements = [
+    { file = "CHANGELOG.md", search = "## Unreleased", replace = "## Unreleased\n\n## {{version}} ({{date}})", exactly = 1 },
+]
