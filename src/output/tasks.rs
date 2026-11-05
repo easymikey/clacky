@@ -112,7 +112,7 @@ fn finish<T: Terminal, E: From<Error> + Display>(
     }
 }
 
-type Step<'s, E> = Pin<Box<dyn Future<Output = Outcome<E>> + 's>>;
+type Step<'s, E> = Pin<Box<dyn Future<Output = Outcome<E>> + Send + 's>>;
 
 /// Futures run in order, each under a spinner that ticks on the clock.
 ///
@@ -171,7 +171,7 @@ impl<'s, T: Terminal, E: From<Error> + Display> AsyncTasks<'s, T, E> {
     pub fn task(
         mut self,
         title: impl Into<String>,
-        work: impl Future<Output = Outcome<E>> + 's,
+        work: impl Future<Output = Outcome<E>> + Send + 's,
     ) -> Self {
         self.items.push((title.into(), Box::pin(work)));
         self
@@ -209,7 +209,7 @@ mod tests {
         },
         fake::{Script, screen},
         render::color::ColorChoice,
-        terminal::TerminalKind,
+        terminal::{Console, TerminalKind},
     };
 
     fn session(kind: TerminalKind) -> Session<Script> {
@@ -326,6 +326,20 @@ mod tests {
             "│\n◒  Fetching...\n◇  Fetching\n"
         );
         Ok(())
+    }
+
+    #[test]
+    fn the_async_run_can_be_sent_to_another_thread() {
+        fn assert_send<T: Send>(_: T) {}
+        let check = |session: &Session<Console>| {
+            assert_send(
+                session
+                    .async_tasks()
+                    .task("Fetching", async { Ok(None) })
+                    .run(),
+            );
+        };
+        let _ = check;
     }
 
     #[tokio::test]
